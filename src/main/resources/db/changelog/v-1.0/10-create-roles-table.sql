@@ -5,14 +5,14 @@ CREATE TABLE roles
     CONSTRAINT pk_roles PRIMARY KEY (id)
 );
 
-INSERT INTO roles (id, name)
-VALUES (1, 'admin');
+INSERT INTO roles (name)
+VALUES ('admin');
 
-INSERT INTO roles (id, name)
-VALUES (2, 'company admin');
+INSERT INTO roles (name)
+VALUES ('company admin');
 
-INSERT INTO roles (id, name)
-VALUES (3, 'accountant');
+INSERT INTO roles (name)
+VALUES ('accountant');
 
-INSERT INTO roles (id, name)
-VALUES (4, 'user')
+INSERT INTO roles (name)
+VALUES ('user')

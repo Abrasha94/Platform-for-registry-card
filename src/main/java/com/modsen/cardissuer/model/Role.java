@@ -1,17 +1,15 @@
 package com.modsen.cardissuer.model;
 
-import lombok.*;
-import org.hibernate.Hibernate;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.util.List;
-import java.util.Objects;
 
 @Entity
 @Table(name = "roles")
-@Getter
-@Setter
-@ToString
+@Data
 @RequiredArgsConstructor
 public class Role {
 
@@ -26,16 +24,4 @@ public class Role {
     @ToString.Exclude
     private List<User> users;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        Role role = (Role) o;
-        return id != null && Objects.equals(id, role.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
 }

@@ -9,9 +9,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "cards")
-@Getter
-@Setter
-@ToString
+@Data
 @RequiredArgsConstructor
 public class Card {
 
@@ -38,16 +36,4 @@ public class Card {
     @JoinColumn(name = "company_id")
     private Company company;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        Card card = (Card) o;
-        return number != null && Objects.equals(number, card.number);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
 }

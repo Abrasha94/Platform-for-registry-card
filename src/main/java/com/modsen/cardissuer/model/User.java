@@ -1,17 +1,31 @@
 package com.modsen.cardissuer.model;
 
-import lombok.*;
-import org.hibernate.Hibernate;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
-@ToString
+@Data
 @RequiredArgsConstructor
 public class User {
 
@@ -22,8 +36,15 @@ public class User {
     @Column(nullable = false, length = 55, unique = true)
     private String name;
 
-    @Column(nullable = false, length = 25)
+    @Column(nullable = false)
     private String password;
+
+    @Transient
+    private String confirmPassword;
+
+    @Column(nullable = false, columnDefinition = "varchar(10) default 'ACTIVE'")
+    @Enumerated(value = EnumType.STRING)
+    private Status status;
 
     @ManyToOne
     @JoinColumn(name = "companies_id", nullable = false)
@@ -33,24 +54,19 @@ public class User {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-    @ManyToOne
-    @JoinColumn(name = "access_id", nullable = false)
-    private Access access;
+    @ManyToMany
+    @JoinTable(name = "user_permissions",
+    joinColumns = @JoinColumn(name = "user_id"),
+    inverseJoinColumns = @JoinColumn(name = "access_id"))
+    private Set<Access> accessSet;
 
     @OneToMany(mappedBy = "user")
     @ToString.Exclude
     private List<Card> cards;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        User user = (User) o;
-        return id != null && Objects.equals(id, user.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
+    public Set<SimpleGrantedAuthority> getAuthorities() {
+        return getAccessSet().stream()
+                .map(permission -> new SimpleGrantedAuthority(permission.getPermission()))
+                .collect(Collectors.toSet());
     }
 }
