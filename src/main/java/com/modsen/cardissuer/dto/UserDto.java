@@ -1,11 +1,13 @@
 package com.modsen.cardissuer.dto;
 
+import com.modsen.cardissuer.model.Access;
 import com.modsen.cardissuer.model.Company;
 import com.modsen.cardissuer.model.Role;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.util.Set;
 
 @Data
 public class UserDto {
@@ -21,4 +23,5 @@ public class UserDto {
     private String confirmPassword;
     private Company company;
     private Role role;
+    private Set<Access> accessSet;
 }

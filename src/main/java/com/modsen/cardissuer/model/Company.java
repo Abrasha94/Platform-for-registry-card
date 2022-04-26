@@ -11,18 +11,10 @@ import java.util.List;
 @Table(name = "companies")
 @Data
 @RequiredArgsConstructor
-public class Company {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Company extends BaseEntity {
 
     @Column(nullable = false, unique = true)
     private String name;
-
-    @Column(nullable = false, columnDefinition = "varchar(10) default 'ACTIVE'")
-    private String status;
-
 
     @OneToMany(mappedBy = "company")
     @ToString.Exclude

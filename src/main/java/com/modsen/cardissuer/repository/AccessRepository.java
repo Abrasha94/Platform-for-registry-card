@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AccessRepository extends JpaRepository<Access, Long> {
+    Access findByPermission(String permission);
 }

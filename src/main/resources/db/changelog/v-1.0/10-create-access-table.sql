@@ -5,4 +5,4 @@ CREATE TABLE access
     CONSTRAINT pk_access PRIMARY KEY (id)
 );
 
-INSERT INTO access(permission) VALUES ('all permission')
+INSERT INTO access(permission) VALUES ('admin permission')
