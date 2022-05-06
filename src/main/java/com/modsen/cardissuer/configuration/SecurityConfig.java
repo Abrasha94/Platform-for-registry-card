@@ -9,13 +9,14 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    public static final String LOGIN_ENDPOINT = "/auth/login";
-    public static final String ADMIN_ENDPOINT = "/admin/**";
+    public static final String LOGIN_ENDPOINT = "/api/v1/auth/login";
+    public static final String ADMIN_ENDPOINT = "/api/v1/admin/**";
 
     private final JwtTokenProvider jwtTokenProvider;
 

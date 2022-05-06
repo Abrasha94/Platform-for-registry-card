@@ -1,0 +1,105 @@
+package com.modsen.cardissuer.rest;
+
+import com.modsen.cardissuer.dto.ChangeCompanyStatusDto;
+import com.modsen.cardissuer.dto.ChangeUserStatusDto;
+import com.modsen.cardissuer.dto.CompanyResponseDto;
+import com.modsen.cardissuer.dto.RegisterCompanyDto;
+import com.modsen.cardissuer.dto.AdminRegisterUserDto;
+import com.modsen.cardissuer.dto.UserResponseDto;
+import com.modsen.cardissuer.exception.CompanyNotFoundException;
+import com.modsen.cardissuer.exception.UserNotFoundException;
+import com.modsen.cardissuer.model.Access;
+import com.modsen.cardissuer.model.Company;
+import com.modsen.cardissuer.model.User;
+import com.modsen.cardissuer.service.CompanyService;
+import com.modsen.cardissuer.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+
+@RestController
+@RequestMapping("/api/v1/admin/")
+public class AdminRestControllerV1 {
+
+    private final UserService userService;
+    private final CompanyService companyService;
+
+    @Autowired
+    public AdminRestControllerV1(UserService userService, CompanyService companyService) {
+        this.userService = userService;
+        this.companyService = companyService;
+    }
+
+    @GetMapping("users/{id}")
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable(name = "id") Long id) {
+        final User user = userService.findById(id);
+        if (user == null) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(UserResponseDto.fromUser(user), HttpStatus.OK);
+    }
+
+    @PostMapping("register/companies")
+    public ResponseEntity registerCompany(@RequestBody RegisterCompanyDto registerCompanyDto) {
+
+        final Company company = companyService.save(registerCompanyDto);
+        if (company == null) {
+            return ResponseEntity.badRequest().body(registerCompanyDto.getName() + " company do not created!");
+        }
+        return ResponseEntity.ok(company.getName() + " company successfully created");
+    }
+
+    @PostMapping("register/users")
+    public ResponseEntity registerUser(@RequestBody AdminRegisterUserDto adminRegisterUserDto) {
+
+        final User user = userService.save(adminRegisterUserDto);
+        if (user == null) {
+            return ResponseEntity.badRequest().body(adminRegisterUserDto.getName() + " user do not created!");
+        }
+        return ResponseEntity.ok(user.getName() + " user successfully created!"
+                + " Work in " + user.getCompany().getName()
+                + " company, and have " + user.getRole().getName() + " role. With "
+                + user.getAccessSet().stream().map(Access::getPermission).collect(Collectors.toList()));
+    }
+
+    @PostMapping("users/{id}/status")
+    public ResponseEntity<UserResponseDto> changeUserStatus(@PathVariable(name = "id") Long id, @RequestBody ChangeUserStatusDto dto) {
+        try {
+            final User user = userService.changeStatus(id, dto);
+            return new ResponseEntity<>(UserResponseDto.fromUser(user), HttpStatus.OK);
+        } catch (UserNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+    }
+
+    @PostMapping("companies/{id}/status")
+    public ResponseEntity<CompanyResponseDto> changeCompanyStatus(@PathVariable(name = "id") Long id, @RequestBody ChangeCompanyStatusDto dto) {
+        try {
+            final Company company = companyService.changeStatus(id, dto);
+            return new ResponseEntity<>(CompanyResponseDto.fromCompany(company), HttpStatus.OK);
+        } catch (CompanyNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+    }
+
+    @GetMapping("companies")
+    public ResponseEntity<List<CompanyResponseDto>> getAllCompanies() {
+        final List<CompanyResponseDto> companies = companyService.findAll();
+        return new ResponseEntity<>(companies, HttpStatus.OK);
+    }
+
+    @GetMapping("users/accountants")
+    public ResponseEntity<List<UserResponseDto>> getAllAccountants() {
+        try {
+            final List<UserResponseDto> allAccountants = userService.findAllAccountants();
+            return new ResponseEntity<>(allAccountants, HttpStatus.OK);
+        } catch (UserNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+    }
+}

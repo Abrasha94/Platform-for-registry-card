@@ -9,7 +9,7 @@ INSERT INTO roles (name)
 VALUES ('admin');
 
 INSERT INTO roles (name)
-VALUES ('company admin');
+VALUES ('moderator');
 
 INSERT INTO roles (name)
 VALUES ('accountant');

@@ -11,5 +11,6 @@
     <include file="10-changeset-users-table.xml" relativeToChangelogFile="true"/>
     <include file="10-changeset-cards-table.xml" relativeToChangelogFile="true"/>
     <include file="10-changeset-user_permissions-table.xml" relativeToChangelogFile="true"/>
+    <include file="10-changeset-users_cards-table.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>
