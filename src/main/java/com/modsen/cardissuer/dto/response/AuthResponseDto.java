@@ -1,4 +1,4 @@
-package com.modsen.cardissuer.dto;
+package com.modsen.cardissuer.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,4 +8,5 @@ import lombok.Data;
 public class AuthResponseDto {
     private String name;
     private String token;
+    private String refreshToken;
 }

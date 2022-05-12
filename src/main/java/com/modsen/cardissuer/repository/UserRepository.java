@@ -1,9 +1,6 @@
 package com.modsen.cardissuer.repository;
 
-import com.modsen.cardissuer.model.Access;
-import com.modsen.cardissuer.model.Role;
-import com.modsen.cardissuer.model.Status;
-import com.modsen.cardissuer.model.User;
+import com.modsen.cardissuer.model.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -31,4 +28,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("update User u set u.accessSet = ?1 where u.id = ?2")
     void updateAccess(Set<Access> accessSet, Long userId);
+
+    @Transactional
+    @Modifying
+    @Query("update User u set u.password = ?1 where u.id = ?2")
+    void updatePassword(String password, Long id);
+
 }

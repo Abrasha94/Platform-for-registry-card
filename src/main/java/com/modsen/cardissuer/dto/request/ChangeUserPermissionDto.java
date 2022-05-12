@@ -1,4 +1,4 @@
-package com.modsen.cardissuer.dto;
+package com.modsen.cardissuer.dto.request;
 
 import lombok.Getter;
 

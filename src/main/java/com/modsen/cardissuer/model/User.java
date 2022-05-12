@@ -42,12 +42,8 @@ public class User extends BaseEntity {
     @ToString.Exclude
     private Set<Access> accessSet;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "users_cards",
-    joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
-    inverseJoinColumns = {@JoinColumn(name = "cards_number", referencedColumnName = "number")})
-    @ToString.Exclude
-    private List<Card> cards;
+    @OneToMany(mappedBy = "user")
+    private List<UsersCards> usersCards;
 
     @Override
     public boolean equals(Object o) {

@@ -1,6 +1,8 @@
 package com.modsen.cardissuer.service;
 
-import com.modsen.cardissuer.dto.*;
+import com.modsen.cardissuer.dto.request.*;
+import com.modsen.cardissuer.dto.response.UserResponseDto;
+import com.modsen.cardissuer.exception.WrongPasswordException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Access;
 import com.modsen.cardissuer.model.Status;
@@ -15,8 +17,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.sql.Array;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -57,9 +57,7 @@ public class UserService {
     }
 
     public User saveInCompany(AccountantRegisterUserDto dto, HttpServletRequest request) {
-        final String token = jwtTokenProvider.resolveToken(request);
-        final String userName = jwtTokenProvider.getName(token);
-        final User reqUser = userRepository.findByName(userName).orElseThrow();
+        final User reqUser = getUserFromRequest(request);
         final User user = new User();
         user.setName(dto.getName());
         user.setPassword(encoder.encode(dto.getPassword()));
@@ -107,5 +105,22 @@ public class UserService {
             throw new UserNotFoundException("Accountants not found!");
         }
         return accountants.stream().map(UserResponseDto::fromUser).collect(Collectors.toList());
+    }
+
+    public void changePassword(ChangePasswordDto dto, HttpServletRequest request) {
+        final User user = getUserFromRequest(request);
+        if (!encoder.matches(dto.getOldPass(), user.getPassword())) {
+            throw new WrongPasswordException("Wrong old password!");
+        }
+        if (encoder.matches(dto.getNewPass(), user.getPassword())) {
+            throw new WrongPasswordException("Old and new password don't be the same!");
+        }
+        userRepository.updatePassword(encoder.encode(dto.getNewPass()), user.getId());
+    }
+
+    private User getUserFromRequest(HttpServletRequest request) {
+        final String token = jwtTokenProvider.resolveToken(request);
+        final String userName = jwtTokenProvider.getName(token);
+        return userRepository.findByName(userName).orElseThrow();
     }
 }

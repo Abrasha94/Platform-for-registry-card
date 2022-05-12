@@ -1,19 +1,27 @@
 package com.modsen.cardissuer.rest;
 
-import com.modsen.cardissuer.dto.AccountantRegisterUserDto;
-import com.modsen.cardissuer.dto.CardResponseDto;
-import com.modsen.cardissuer.dto.ChangeUserPermissionDto;
-import com.modsen.cardissuer.dto.UserResponseDto;
+import com.modsen.cardissuer.dto.request.AccountantRegisterUserDto;
+import com.modsen.cardissuer.dto.request.CardOrderDto;
+import com.modsen.cardissuer.dto.response.CardResponseDto;
+import com.modsen.cardissuer.dto.request.ChangeUserPermissionDto;
+import com.modsen.cardissuer.dto.request.ChangeUsersInCardDto;
+import com.modsen.cardissuer.dto.response.UserResponseDto;
 import com.modsen.cardissuer.exception.CardNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Access;
+import com.modsen.cardissuer.model.Card;
 import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.service.CardService;
 import com.modsen.cardissuer.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -36,7 +44,7 @@ public class AccountantRestControllerV1 {
     @GetMapping("cards")
     public ResponseEntity<List<CardResponseDto>> getAllCard(HttpServletRequest request) {
         try {
-            final List<CardResponseDto> cards = cardService.findCardsByUserCompany(request);
+            final List<CardResponseDto> cards = cardService.findCardsByCompany(request);
             return new ResponseEntity<>(cards, HttpStatus.OK);
         } catch (NoSuchElementException | CardNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -66,8 +74,25 @@ public class AccountantRestControllerV1 {
         }
     }
 
-//    @PostMapping("cards/order")
-//    public ResponseEntity orderCard(@RequestBody ) {
-//
-//    }
+    @PostMapping("cards/order")
+    public ResponseEntity<CardResponseDto> orderCard(@RequestBody CardOrderDto dto, HttpServletRequest request) {
+        try {
+            final Card card = cardService.orderCard(dto, request);
+            return new ResponseEntity<>(CardResponseDto.fromCard(card), HttpStatus.OK);
+        } catch (UserNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+    }
+
+    @PostMapping("cards/{number}/change")
+    public ResponseEntity<CardResponseDto> addUsersInCard(@PathVariable(name = "number") Long number,
+                                                          @RequestBody ChangeUsersInCardDto dto,
+                                                          HttpServletRequest request) {
+        try {
+            final Card card = cardService.addUser(number, dto, request);
+            return new ResponseEntity<>(CardResponseDto.fromCard(card), HttpStatus.OK);
+        } catch (CardNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+    }
 }

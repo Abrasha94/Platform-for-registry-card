@@ -11,4 +11,5 @@ public class BeanUtil {
     protected BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
     }
+
 }

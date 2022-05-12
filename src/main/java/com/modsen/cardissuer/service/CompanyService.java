@@ -1,9 +1,8 @@
 package com.modsen.cardissuer.service;
 
-import com.modsen.cardissuer.dto.ChangeCompanyStatusDto;
-import com.modsen.cardissuer.dto.CompanyResponseDto;
-import com.modsen.cardissuer.dto.RegisterCompanyDto;
-import com.modsen.cardissuer.dto.UserResponseDto;
+import com.modsen.cardissuer.dto.request.ChangeCompanyStatusDto;
+import com.modsen.cardissuer.dto.response.CompanyResponseDto;
+import com.modsen.cardissuer.dto.request.RegisterCompanyDto;
 import com.modsen.cardissuer.exception.CompanyNotFoundException;
 import com.modsen.cardissuer.model.Company;
 import com.modsen.cardissuer.model.Status;

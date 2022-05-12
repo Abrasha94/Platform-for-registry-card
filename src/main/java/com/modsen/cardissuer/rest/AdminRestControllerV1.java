@@ -1,11 +1,11 @@
 package com.modsen.cardissuer.rest;
 
-import com.modsen.cardissuer.dto.ChangeCompanyStatusDto;
-import com.modsen.cardissuer.dto.ChangeUserStatusDto;
-import com.modsen.cardissuer.dto.CompanyResponseDto;
-import com.modsen.cardissuer.dto.RegisterCompanyDto;
-import com.modsen.cardissuer.dto.AdminRegisterUserDto;
-import com.modsen.cardissuer.dto.UserResponseDto;
+import com.modsen.cardissuer.dto.request.ChangeCompanyStatusDto;
+import com.modsen.cardissuer.dto.request.ChangeUserStatusDto;
+import com.modsen.cardissuer.dto.response.CompanyResponseDto;
+import com.modsen.cardissuer.dto.request.RegisterCompanyDto;
+import com.modsen.cardissuer.dto.request.AdminRegisterUserDto;
+import com.modsen.cardissuer.dto.response.UserResponseDto;
 import com.modsen.cardissuer.exception.CompanyNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Access;

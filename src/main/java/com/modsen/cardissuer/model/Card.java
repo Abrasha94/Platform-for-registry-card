@@ -4,7 +4,6 @@ import lombok.*;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Objects;
 
@@ -22,15 +21,20 @@ public class Card {
     @Column(nullable = false, length = 20)
     private String status;
 
-    @Column(nullable = false, length = 10)
-    private String type;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Type type;
 
-    @ManyToMany(mappedBy = "cards",fetch = FetchType.LAZY)
+    @Column(name = "pay_system", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private PaySystem paySystem;
+
+    @OneToMany(mappedBy = "card")
     @ToString.Exclude
-    private List<User> users;
+    private List<UsersCards> usersCards;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id")
+    @JoinColumn(name = "company_id", nullable = false)
     @ToString.Exclude
     private Company company;
 
