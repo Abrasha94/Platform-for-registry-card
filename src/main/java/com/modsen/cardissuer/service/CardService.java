@@ -50,7 +50,7 @@ public class CardService {
 
     public List<CardResponseDto> findCardsByUser(HttpServletRequest request) {
         final User user = getUserFromRequest(request);
-        final List<UsersCards> usersCards = usersCardsRepository.findByUserId(user).orElse(null);
+        final List<UsersCards> usersCards = usersCardsRepository.findByUserId(user.getId()).orElse(null);
         if (usersCards == null) {
             throw new CardNotFoundException("Cards not found!");
         } else {
@@ -88,7 +88,7 @@ public class CardService {
         }
     }
 
-    public Card addUser(Long cardNumber, ChangeUsersInCardDto dto, HttpServletRequest request) {
+    public Card addUser(Long cardNumber, ChangeUsersInCardDto dto) {
         final Card card = cardRepository.findById(cardNumber).orElse(null);
         if (card == null) {
             throw new CardNotFoundException("Card not found!");

@@ -3,7 +3,6 @@ package com.modsen.cardissuer.security;
 import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.repository.UserRepository;
 import com.modsen.cardissuer.security.jwt.JwtUserFactory;
-import com.modsen.cardissuer.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

@@ -23,7 +23,7 @@ public class CardResponseDto {
         final CardResponseDto cardResponseDto = new CardResponseDto();
         cardResponseDto.setNumber(card.getNumber());
         cardResponseDto.setStatus(card.getStatus());
-        cardResponseDto.setType(card.getType().toString());
+        cardResponseDto.setType(String.valueOf(card.getType()));
         cardResponseDto.setPaySystem(card.getPaySystem().toString());
         final List<UsersCards> usersCards = card.getUsersCards();
         if (usersCards == null) {

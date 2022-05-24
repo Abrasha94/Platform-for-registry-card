@@ -2,10 +2,8 @@ package com.modsen.cardissuer.dto.request;
 
 import lombok.Data;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
-import java.util.Set;
 
 @Data
 public class AccountantRegisterUserDto {

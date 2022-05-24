@@ -8,7 +8,6 @@ import com.modsen.cardissuer.dto.request.ChangeUsersInCardDto;
 import com.modsen.cardissuer.dto.response.UserResponseDto;
 import com.modsen.cardissuer.exception.CardNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
-import com.modsen.cardissuer.model.Access;
 import com.modsen.cardissuer.model.Card;
 import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.service.CardService;
@@ -26,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
+
 
 @RestController
 @RequestMapping("/api/v1/accountant/")
@@ -52,15 +51,12 @@ public class AccountantRestControllerV1 {
     }
 
     @PostMapping("register/users")
-    public ResponseEntity registerUserInCompany(@RequestBody AccountantRegisterUserDto dto, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> registerUserInCompany(@RequestBody AccountantRegisterUserDto dto, HttpServletRequest request) {
         final User user = userService.saveInCompany(dto, request);
         if (user == null) {
-            return ResponseEntity.badRequest().body(dto.getName() + " user do not created!");
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
-        return ResponseEntity.ok(user.getName() + " user successfully created!"
-                + " Work in " + user.getCompany().getName()
-                + " company, and have " + user.getRole().getName() + " role. With "
-                + user.getAccessSet().stream().map(Access::getPermission).collect(Collectors.toList()));
+        return new ResponseEntity<>(UserResponseDto.fromUser(user), HttpStatus.OK);
     }
 
     @PostMapping("users/{id}/permissions")
@@ -86,10 +82,9 @@ public class AccountantRestControllerV1 {
 
     @PostMapping("cards/{number}/change")
     public ResponseEntity<CardResponseDto> addUsersInCard(@PathVariable(name = "number") Long number,
-                                                          @RequestBody ChangeUsersInCardDto dto,
-                                                          HttpServletRequest request) {
+                                                          @RequestBody ChangeUsersInCardDto dto) {
         try {
-            final Card card = cardService.addUser(number, dto, request);
+            final Card card = cardService.addUser(number, dto);
             return new ResponseEntity<>(CardResponseDto.fromCard(card), HttpStatus.OK);
         } catch (CardNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);

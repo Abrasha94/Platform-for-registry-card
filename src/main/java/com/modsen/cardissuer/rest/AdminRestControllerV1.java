@@ -8,7 +8,6 @@ import com.modsen.cardissuer.dto.request.AdminRegisterUserDto;
 import com.modsen.cardissuer.dto.response.UserResponseDto;
 import com.modsen.cardissuer.exception.CompanyNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
-import com.modsen.cardissuer.model.Access;
 import com.modsen.cardissuer.model.Company;
 import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.service.CompanyService;
@@ -19,7 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @RestController
@@ -45,26 +43,23 @@ public class AdminRestControllerV1 {
     }
 
     @PostMapping("register/companies")
-    public ResponseEntity registerCompany(@RequestBody RegisterCompanyDto registerCompanyDto) {
+    public ResponseEntity<CompanyResponseDto> registerCompany(@RequestBody RegisterCompanyDto registerCompanyDto) {
 
         final Company company = companyService.save(registerCompanyDto);
         if (company == null) {
-            return ResponseEntity.badRequest().body(registerCompanyDto.getName() + " company do not created!");
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return ResponseEntity.ok(company.getName() + " company successfully created");
+        return new ResponseEntity<>(CompanyResponseDto.fromCompany(company), HttpStatus.OK);
     }
 
     @PostMapping("register/users")
-    public ResponseEntity registerUser(@RequestBody AdminRegisterUserDto adminRegisterUserDto) {
+    public ResponseEntity<UserResponseDto> registerUser(@RequestBody AdminRegisterUserDto adminRegisterUserDto) {
 
         final User user = userService.save(adminRegisterUserDto);
         if (user == null) {
-            return ResponseEntity.badRequest().body(adminRegisterUserDto.getName() + " user do not created!");
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return ResponseEntity.ok(user.getName() + " user successfully created!"
-                + " Work in " + user.getCompany().getName()
-                + " company, and have " + user.getRole().getName() + " role. With "
-                + user.getAccessSet().stream().map(Access::getPermission).collect(Collectors.toList()));
+        return new ResponseEntity<>(UserResponseDto.fromUser(user), HttpStatus.OK);
     }
 
     @PostMapping("users/{id}/status")

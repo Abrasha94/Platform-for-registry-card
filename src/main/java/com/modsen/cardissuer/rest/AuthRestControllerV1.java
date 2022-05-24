@@ -13,7 +13,7 @@ import com.modsen.cardissuer.security.jwt.JwtTokenProvider;
 import com.modsen.cardissuer.service.RefreshTokenService;
 import com.modsen.cardissuer.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -48,7 +48,7 @@ public class AuthRestControllerV1 {
     }
 
     @PostMapping("login")
-    public ResponseEntity login(@Valid @RequestBody AuthRequestDto authRequestDto) {
+    public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody AuthRequestDto authRequestDto) {
         try {
             final String name = authRequestDto.getName();
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(name, authRequestDto.getPassword()));
@@ -58,32 +58,32 @@ public class AuthRestControllerV1 {
             }
             final String token = jwtTokenProvider.createToken(name, user.getAccessSet());
             final RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
-            return ResponseEntity.ok(new AuthResponseDto(name, token, refreshToken.getToken()));
+            return new ResponseEntity<>(new AuthResponseDto(name, token, refreshToken.getToken()), HttpStatus.OK);
         } catch (AuthenticationException e) {
             throw new BadCredentialsException("Invalid name or password");
         }
     }
 
     @PostMapping("refreshtoken")
-    public ResponseEntity refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+    public ResponseEntity<RefreshTokenResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         final String refreshToken = request.getRefreshToken();
         return refreshTokenService.findByToken(refreshToken)
                 .map(refreshTokenService::verifyExpiration)
                 .map(RefreshToken::getUser)
                 .map(user -> {
                     final String token = jwtTokenProvider.createToken(user.getName(), user.getAccessSet());
-                    return ResponseEntity.ok(new RefreshTokenResponse(token, refreshToken));
+                    return new ResponseEntity<>(new RefreshTokenResponse(token, refreshToken), HttpStatus.OK);
                 })
                 .orElseThrow(() -> new RefreshTokenException("Refresh token is wrong!"));
     }
 
     @PostMapping("change-password")
-    public ResponseEntity changePassword(@RequestBody ChangePasswordDto dto, HttpServletRequest request) {
+    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordDto dto, HttpServletRequest request) {
         try {
             userService.changePassword(dto, request);
-            return ResponseEntity.ok("Password successfully changed!");
+            return new ResponseEntity<>("Password successfully changed!", HttpStatus.OK);
         } catch (WrongPasswordException e) {
-            return ResponseEntity.badRequest().body(e);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 }

@@ -7,17 +7,17 @@ import java.util.Random;
 @Component
 public class GenerateCardNumber {
 
-    public static final String[] MASTERCARD_PREFIX_LIST = new String[]{
+    protected static final String[] MASTERCARD_PREFIX_LIST = new String[]{
             "51", "52", "53", "54", "55", "2221", "2222", "2223", "2224", "2225", "2226", "2227", "2228",
             "2229", "223", "224", "225", "226", "227", "228", "229", "23", "24", "25", "26", "270", "271", "2720"};
 
-    public static final String[] VISA_PREFIX_LIST = new String[]{"4539", "4556", "4916", "4532", "4929",
+    protected static final String[] VISA_PREFIX_LIST = new String[]{"4539", "4556", "4916", "4532", "4929",
             "40240071", "4485", "4716", "4"};
 
     private Random random = new Random(System.currentTimeMillis());
 
     private String generate(String[] prefixes, int length) {
-        final String prefix = prefixes[new Random().nextInt(prefixes.length)];
+        final String prefix = prefixes[random.nextInt(prefixes.length)];
 
         int randomNumberLength = length - (prefix.length() + 1);
 

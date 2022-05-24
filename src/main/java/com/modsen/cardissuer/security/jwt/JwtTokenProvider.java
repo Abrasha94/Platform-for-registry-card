@@ -2,8 +2,6 @@ package com.modsen.cardissuer.security.jwt;
 
 import com.modsen.cardissuer.exception.JwtAuthenticationException;
 import com.modsen.cardissuer.model.Access;
-import com.modsen.cardissuer.model.User;
-import com.modsen.cardissuer.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;

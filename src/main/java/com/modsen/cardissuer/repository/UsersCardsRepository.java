@@ -1,7 +1,6 @@
 package com.modsen.cardissuer.repository;
 
 import com.modsen.cardissuer.model.Card;
-import com.modsen.cardissuer.model.Status;
 import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.model.UsersCards;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface UsersCardsRepository extends JpaRepository<UsersCards, Long> {
 
-    Optional<List<UsersCards>> findByUserId(User user);
+    Optional<List<UsersCards>> findByUserId(Long id);
 
     @Transactional
     @Modifying

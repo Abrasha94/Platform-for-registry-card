@@ -16,15 +16,6 @@ public class UserResponseDto {
     private String[] permissions;
     private Status status;
 
-//    public User toUser() {
-//        final User user = new User();
-//        user.setId(id);
-//        user.setName(name);
-//        user.setCompany(company);
-//        user.setRole(role);
-//        user.setAccessSet(accessSet);
-//        return user;
-//    }
 
     public static UserResponseDto fromUser(User user) {
         final UserResponseDto userResponseDto = new UserResponseDto();
