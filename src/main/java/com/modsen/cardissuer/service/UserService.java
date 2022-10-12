@@ -1,6 +1,10 @@
 package com.modsen.cardissuer.service;
 
-import com.modsen.cardissuer.dto.request.*;
+import com.modsen.cardissuer.dto.request.AccountantRegisterUserDto;
+import com.modsen.cardissuer.dto.request.AdminRegisterUserDto;
+import com.modsen.cardissuer.dto.request.ChangePasswordDto;
+import com.modsen.cardissuer.dto.request.ChangeUserPermissionDto;
+import com.modsen.cardissuer.dto.request.ChangeUserStatusDto;
 import com.modsen.cardissuer.dto.response.UserResponseDto;
 import com.modsen.cardissuer.exception.WrongPasswordException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
@@ -11,7 +15,7 @@ import com.modsen.cardissuer.repository.AccessRepository;
 import com.modsen.cardissuer.repository.CompanyRepository;
 import com.modsen.cardissuer.repository.RoleRepository;
 import com.modsen.cardissuer.repository.UserRepository;
-import com.modsen.cardissuer.security.jwt.JwtTokenProvider;
+import com.modsen.cardissuer.util.MethodsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,18 +35,18 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final AccessRepository accessRepository;
     private final BCryptPasswordEncoder encoder;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final MethodsUtil methodsUtil;
 
     @Autowired
     public UserService(UserRepository userRepository, CompanyRepository companyRepository,
                        RoleRepository roleRepository, AccessRepository accessRepository,
-                       BCryptPasswordEncoder encoder, JwtTokenProvider jwtTokenProvider) {
+                       BCryptPasswordEncoder encoder, MethodsUtil methodsUtil) {
         this.userRepository = userRepository;
         this.companyRepository = companyRepository;
         this.roleRepository = roleRepository;
         this.accessRepository = accessRepository;
         this.encoder = encoder;
-        this.jwtTokenProvider = jwtTokenProvider;
+        this.methodsUtil = methodsUtil;
     }
 
     public User save(AdminRegisterUserDto userDto) {
@@ -57,7 +61,7 @@ public class UserService {
     }
 
     public User saveInCompany(AccountantRegisterUserDto dto, HttpServletRequest request) {
-        final User reqUser = getUserFromRequest(request);
+        final User reqUser = methodsUtil.getUserFromRequest(request);
         final User user = new User();
         user.setName(dto.getName());
         user.setPassword(encoder.encode(dto.getPassword()));
@@ -108,7 +112,7 @@ public class UserService {
     }
 
     public void changePassword(ChangePasswordDto dto, HttpServletRequest request) {
-        final User user = getUserFromRequest(request);
+        final User user = methodsUtil.getUserFromRequest(request);
         if (!encoder.matches(dto.getOldPass(), user.getPassword())) {
             throw new WrongPasswordException("Wrong old password!");
         }
@@ -118,9 +122,4 @@ public class UserService {
         userRepository.updatePassword(encoder.encode(dto.getNewPass()), user.getId());
     }
 
-    private User getUserFromRequest(HttpServletRequest request) {
-        final String token = jwtTokenProvider.resolveToken(request);
-        final String userName = jwtTokenProvider.getName(token);
-        return userRepository.findByName(userName).orElseThrow();
-    }
 }

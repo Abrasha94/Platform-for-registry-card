@@ -1,0 +1,36 @@
+version: "3.9"
+services:
+  web:
+    container_name: "web"
+    build: .
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+
+  db:
+    container_name: "db"
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_DB: "CardIssuer"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "root"
+    ports:
+      - "5432:5432"
+
+  balance:
+    container_name: "balance"
+    image: abrasha94/my-repository:balance_image
+    restart: always
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mongoDb
+
+  mongoDb:
+    container_name: "mongoDb"
+    image: mongo:4.2.23-rc1
+    ports:
+      - "27017:27017"
+    restart: always

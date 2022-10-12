@@ -2,14 +2,17 @@ package com.modsen.cardissuer.rest;
 
 import com.modsen.cardissuer.dto.request.ChangeCompanyStatusDto;
 import com.modsen.cardissuer.dto.request.ChangeUserStatusDto;
+import com.modsen.cardissuer.dto.response.CardResponseDto;
 import com.modsen.cardissuer.dto.response.CompanyResponseDto;
 import com.modsen.cardissuer.dto.request.RegisterCompanyDto;
 import com.modsen.cardissuer.dto.request.AdminRegisterUserDto;
 import com.modsen.cardissuer.dto.response.UserResponseDto;
+import com.modsen.cardissuer.exception.CardNotFoundException;
 import com.modsen.cardissuer.exception.CompanyNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Company;
 import com.modsen.cardissuer.model.User;
+import com.modsen.cardissuer.service.CardService;
 import com.modsen.cardissuer.service.CompanyService;
 import com.modsen.cardissuer.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 
@@ -26,11 +30,13 @@ public class AdminRestControllerV1 {
 
     private final UserService userService;
     private final CompanyService companyService;
+    private final CardService cardService;
 
     @Autowired
-    public AdminRestControllerV1(UserService userService, CompanyService companyService) {
+    public AdminRestControllerV1(UserService userService, CompanyService companyService, CardService cardService) {
         this.userService = userService;
         this.companyService = companyService;
+        this.cardService = cardService;
     }
 
     @GetMapping("users/{id}")
@@ -94,6 +100,17 @@ public class AdminRestControllerV1 {
             final List<UserResponseDto> allAccountants = userService.findAllAccountants();
             return new ResponseEntity<>(allAccountants, HttpStatus.OK);
         } catch (UserNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+    }
+
+    @GetMapping("{cardNumber}")
+    public ResponseEntity<List<CardResponseDto>> sendMsg(@PathVariable(name = "cardNumber") String cardNumber, HttpServletRequest request) {
+        cardService.sendMsg(cardNumber);
+        try {
+            final List<CardResponseDto> cards = cardService.findCardsByUser(request);
+            return new ResponseEntity<>(cards, HttpStatus.OK);
+        } catch (CardNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
     }

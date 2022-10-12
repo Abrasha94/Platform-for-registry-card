@@ -1,9 +1,13 @@
 package com.modsen.cardissuer.model;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 
@@ -37,6 +41,9 @@ public class Card {
     @JoinColumn(name = "company_id", nullable = false)
     @ToString.Exclude
     private Company company;
+
+    @Column(name = "balance")
+    private BigDecimal balance;
 
     @Override
     public boolean equals(Object o) {

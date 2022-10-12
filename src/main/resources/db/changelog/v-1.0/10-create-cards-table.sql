@@ -5,6 +5,7 @@ CREATE TABLE cards
     type            VARCHAR(10)                 NOT NULL,
     pay_system      VARCHAR(10)                 NOT NULL,
     company_id      BIGINT,
+    balance         decimal,
     CONSTRAINT pk_cards PRIMARY KEY (number)
 );
 
