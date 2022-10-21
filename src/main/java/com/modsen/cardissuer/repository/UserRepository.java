@@ -15,6 +15,8 @@ import java.util.Set;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    Optional<User> findByKeycloakUserId(String keycloakUserId);
+
     Optional<User> findByName(String name);
 
     List<User> findByRole(Role role);

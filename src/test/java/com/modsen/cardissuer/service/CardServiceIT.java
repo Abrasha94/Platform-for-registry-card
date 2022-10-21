@@ -7,6 +7,7 @@ import com.modsen.cardissuer.model.Company;
 import com.modsen.cardissuer.model.PaySystem;
 import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.repository.CardRepository;
+import com.modsen.cardissuer.repository.UserRepository;
 import com.modsen.cardissuer.util.MethodsUtil;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -41,6 +42,9 @@ class CardServiceIT {
     CardRepository cardRepository;
 
     @MockBean
+    UserRepository userRepository;
+
+    @MockBean
     MethodsUtil methodsUtil;
 
     @BeforeAll
@@ -65,13 +69,14 @@ class CardServiceIT {
 
     @Test
     void findCardsByCompany() {
-        doReturn(user).when(methodsUtil).getUserFromRequest(null);
+        doReturn("123").when(methodsUtil).getKeycloakUserId();
+        doReturn(user).when(userRepository).findByKeycloakUserId("123");
         doReturn(cardList).when(cardRepository).findByCompany(null);
         configureFor("localhost", 8082);
         stubFor(get(anyUrl()).willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withBody("{\"balance\": 1.234,\"cardNumber\": 1111111111111111}")));
-        final List<CardResponseDto> cards = cardService.findCardsByCompany(null);
+        final List<CardResponseDto> cards = cardService.findCardsByCompany();
         assertEquals(new BigDecimal("1.234"), cards.get(0).getBalance());
         assertEquals(new BigDecimal("1.234"), cards.get(1).getBalance());
     }

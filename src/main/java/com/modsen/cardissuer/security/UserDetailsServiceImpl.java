@@ -9,22 +9,23 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-@Service
-public class UserDetailsServiceImpl implements UserDetailsService {
+//@Service
+public class UserDetailsServiceImpl {
+//        implements UserDetailsService {
 
-    private final UserRepository userRepository;
-
-    @Autowired
-    public UserDetailsServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String name) throws UsernameNotFoundException {
-        final User user = userRepository.findByName(name).orElse(null);
-        if (user == null) {
-            throw new UsernameNotFoundException("User doesn't exists");
-        }
-        return JwtUserFactory.create(user);
-    }
+//    private final UserRepository userRepository;
+//
+//    @Autowired
+//    public UserDetailsServiceImpl(UserRepository userRepository) {
+//        this.userRepository = userRepository;
+//    }
+//
+//    @Override
+//    public UserDetails loadUserByUsername(String name) throws UsernameNotFoundException {
+//        final User user = userRepository.findByName(name).orElse(null);
+//        if (user == null) {
+//            throw new UsernameNotFoundException("User doesn't exists");
+//        }
+//        return JwtUserFactory.create(user);
+//    }
 }

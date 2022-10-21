@@ -13,22 +13,22 @@ import java.util.stream.Collectors;
 
 public final class JwtUserFactory {
 
-    private JwtUserFactory() {
-    }
-
-    public static JwtUser create(User user) {
-        return new JwtUser(
-                user.getId(),
-                user.getName(),
-                user.getPassword(),
-                user.getStatus().equals(Status.ACTIVE),
-                mapToGrantedAuthority(new HashSet<>(user.getAccessSet()))
-        );
-    }
-
-    private static List<GrantedAuthority> mapToGrantedAuthority(Set<Access> accessSet) {
-        return accessSet.stream()
-                .map(access -> new SimpleGrantedAuthority(access.getPermission()))
-                .collect(Collectors.toList());
-    }
+//    private JwtUserFactory() {
+//    }
+//
+//    public static JwtUser create(User user) {
+//        return new JwtUser(
+//                user.getId(),
+//                user.getName(),
+//                user.getPassword(),
+//                user.getStatus().equals(Status.ACTIVE),
+//                mapToGrantedAuthority(new HashSet<>(user.getAccessSet()))
+//        );
+//    }
+//
+//    private static List<GrantedAuthority> mapToGrantedAuthority(Set<Access> accessSet) {
+//        return accessSet.stream()
+//                .map(access -> new SimpleGrantedAuthority(access.getPermission()))
+//                .collect(Collectors.toList());
+//    }
 }

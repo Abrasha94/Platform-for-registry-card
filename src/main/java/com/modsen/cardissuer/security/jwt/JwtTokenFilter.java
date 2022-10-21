@@ -11,24 +11,25 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
-public class JwtTokenFilter extends GenericFilterBean {
+public class JwtTokenFilter {
+//        extends GenericFilterBean {
 
-    private final JwtTokenProvider jwtTokenProvider;
-
-    public JwtTokenFilter(JwtTokenProvider jwtTokenProvider) {
-        this.jwtTokenProvider = jwtTokenProvider;
-    }
-
-    @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
-            throws IOException, ServletException {
-        final String token = jwtTokenProvider.resolveToken((HttpServletRequest) servletRequest);
-        if (token != null && jwtTokenProvider.isValidateToken(token)) {
-            final Authentication authentication = jwtTokenProvider.getAuthentication(token);
-            if (authentication != null) {
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
-        }
-        filterChain.doFilter(servletRequest, servletResponse);
-    }
+//    private final JwtTokenProvider jwtTokenProvider;
+//
+//    public JwtTokenFilter(JwtTokenProvider jwtTokenProvider) {
+//        this.jwtTokenProvider = jwtTokenProvider;
+//    }
+//
+//    @Override
+//    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
+//            throws IOException, ServletException {
+//        final String token = jwtTokenProvider.resolveToken((HttpServletRequest) servletRequest);
+//        if (token != null && jwtTokenProvider.isValidateToken(token)) {
+//            final Authentication authentication = jwtTokenProvider.getAuthentication(token);
+//            if (authentication != null) {
+//                SecurityContextHolder.getContext().setAuthentication(authentication);
+//            }
+//        }
+//        filterChain.doFilter(servletRequest, servletResponse);
+//    }
 }
