@@ -8,7 +8,6 @@ import com.modsen.cardissuer.model.PaySystem;
 import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.repository.CardRepository;
 import com.modsen.cardissuer.repository.UserRepository;
-import com.modsen.cardissuer.util.MethodsUtil;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -45,9 +44,6 @@ class CardServiceIT {
     @MockBean
     UserRepository userRepository;
 
-    @MockBean
-    MethodsUtil methodsUtil;
-
     @BeforeAll
     static void setUp() {
         Card card1 = new Card();
@@ -70,7 +66,7 @@ class CardServiceIT {
 
     @Test
     void findCardsByCompany(HttpServletRequest request) {
-        doReturn("123").when(methodsUtil).getKeycloakUserId(request);
+        doReturn("123").when(request).getHeader("keycloakUserID");
         doReturn(user).when(userRepository).findByKeycloakUserId("123");
         doReturn(cardList).when(cardRepository).findByCompany(null);
         configureFor("localhost", 8082);

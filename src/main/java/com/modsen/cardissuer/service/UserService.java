@@ -17,7 +17,6 @@ import com.modsen.cardissuer.repository.AccessRepository;
 import com.modsen.cardissuer.repository.CompanyRepository;
 import com.modsen.cardissuer.repository.RoleRepository;
 import com.modsen.cardissuer.repository.UserRepository;
-import com.modsen.cardissuer.util.MethodsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,24 +31,23 @@ import java.util.stream.Collectors;
 @Service
 public class UserService {
 
+    public static final String HEADER_KEYCLOAKUSERID = "keycloakUserID";
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
     private final RoleRepository roleRepository;
     private final AccessRepository accessRepository;
     private final BCryptPasswordEncoder encoder;
-    private final MethodsUtil methodsUtil;
 
     @Autowired
     public UserService(UserRepository userRepository, CompanyRepository companyRepository,
                        RoleRepository roleRepository, AccessRepository accessRepository,
-                       BCryptPasswordEncoder encoder, MethodsUtil methodsUtil) {
+                       BCryptPasswordEncoder encoder) {
 
         this.userRepository = userRepository;
         this.companyRepository = companyRepository;
         this.roleRepository = roleRepository;
         this.accessRepository = accessRepository;
         this.encoder = encoder;
-        this.methodsUtil = methodsUtil;
     }
 
     public User save(AdminRegisterUserDto userDto) {
@@ -70,7 +68,7 @@ public class UserService {
     public User saveInCompany(AccountantRegisterUserDto dto, HttpServletRequest request) {
 
         final User reqUser = userRepository
-                .findByKeycloakUserId(methodsUtil.getKeycloakUserId(request))
+                .findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID))
                 .orElseThrow(() -> new UserNotFoundException("User not found!"));
 
         final User user = new User();
@@ -130,7 +128,7 @@ public class UserService {
     public void changePassword(ChangePasswordDto dto, HttpServletRequest request) {
 
         final User user = userRepository
-                .findByKeycloakUserId(methodsUtil.getKeycloakUserId(request))
+                .findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID))
                 .orElseThrow(() -> new UserNotFoundException("User not found!"));
 
         if (!encoder.matches(dto.getOldPass(), user.getPassword())) {

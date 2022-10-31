@@ -16,7 +16,6 @@ import com.modsen.cardissuer.repository.CardRepository;
 import com.modsen.cardissuer.repository.UserRepository;
 import com.modsen.cardissuer.repository.UsersCardsRepository;
 import com.modsen.cardissuer.util.GenerateCardNumber;
-import com.modsen.cardissuer.util.MethodsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,21 +32,20 @@ import java.util.stream.Collectors;
 @Service
 public class CardService {
 
+    public static final String HEADER_KEYCLOAKUSERID = "keycloakUserID";
     private final CardRepository cardRepository;
     private final UserRepository userRepository;
     private final UsersCardsRepository usersCardsRepository;
     private final UsersCardsService usersCardsService;
-    private final MethodsUtil methodsUtil;
     private final GenerateCardNumber generateCardNumber;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Autowired
-    public CardService(CardRepository cardRepository, UserRepository userRepository, MethodsUtil methodsUtil,
+    public CardService(CardRepository cardRepository, UserRepository userRepository,
                        GenerateCardNumber generateCardNumber, UsersCardsRepository usersCardsRepository,
                        UsersCardsService usersCardsService, KafkaTemplate<String, String> kafkaTemplate) {
         this.cardRepository = cardRepository;
         this.userRepository = userRepository;
-        this.methodsUtil = methodsUtil;
         this.generateCardNumber = generateCardNumber;
         this.usersCardsRepository = usersCardsRepository;
         this.usersCardsService = usersCardsService;
@@ -56,7 +54,7 @@ public class CardService {
 
     public List<CardResponseDto> findCardsByCompany(HttpServletRequest request) {
 
-        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(methodsUtil.getKeycloakUserId(request));
+        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID));
 
         if (optionalUser.isPresent()) {
             final List<Card> cardsByCompany = cardRepository.findByCompany(optionalUser.get().getCompany());
@@ -73,7 +71,7 @@ public class CardService {
 
     public List<CardResponseDto> findCardsByUser(HttpServletRequest request) {
 
-        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(methodsUtil.getKeycloakUserId(request));
+        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID));
 
         if (optionalUser.isPresent()) {
             final List<UsersCards> usersCards = usersCardsRepository.findByUserId(optionalUser.get().getId()).orElse(null);
@@ -92,7 +90,7 @@ public class CardService {
 
     public Card orderCard(CardOrderDto dto, HttpServletRequest request) {
 
-        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(methodsUtil.getKeycloakUserId(request));
+        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID));
         User user;
 
         if (optionalUser.isPresent()) {
@@ -121,7 +119,7 @@ public class CardService {
             return cardRepository.save(card);
         } else if (userRepository.findById(dto.getUserId()).isPresent()) {
             final UsersCards usersCards = new UsersCards();
-            usersCards.setUser(userRepository.getOne(dto.getUserId()));
+            usersCards.setUser(userRepository.findById(dto.getUserId()).orElseThrow(() -> new UserNotFoundException("User not found!")));
             final UsersCards saveUsersCards = usersCardsRepository.save(usersCards);
             card.setUsersCards(Collections.singletonList(saveUsersCards));
             final Card saveCard = cardRepository.save(card);
