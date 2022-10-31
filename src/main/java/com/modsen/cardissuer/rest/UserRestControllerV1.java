@@ -27,7 +27,7 @@ public class UserRestControllerV1 {
     @GetMapping("cards")
     public ResponseEntity<List<CardResponseDto>> getAllCard(HttpServletRequest request) {
         try {
-            final List<CardResponseDto> cards = cardService.findCardsByUser();
+            final List<CardResponseDto> cards = cardService.findCardsByUser(request);
             return new ResponseEntity<>(cards, HttpStatus.OK);
         } catch (CardNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);

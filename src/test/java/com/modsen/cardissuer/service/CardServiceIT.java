@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
+import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,15 +69,15 @@ class CardServiceIT {
     }
 
     @Test
-    void findCardsByCompany() {
-        doReturn("123").when(methodsUtil).getKeycloakUserId();
+    void findCardsByCompany(HttpServletRequest request) {
+        doReturn("123").when(methodsUtil).getKeycloakUserId(request);
         doReturn(user).when(userRepository).findByKeycloakUserId("123");
         doReturn(cardList).when(cardRepository).findByCompany(null);
         configureFor("localhost", 8082);
         stubFor(get(anyUrl()).willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withBody("{\"balance\": 1.234,\"cardNumber\": 1111111111111111}")));
-        final List<CardResponseDto> cards = cardService.findCardsByCompany();
+        final List<CardResponseDto> cards = cardService.findCardsByCompany(request);
         assertEquals(new BigDecimal("1.234"), cards.get(0).getBalance());
         assertEquals(new BigDecimal("1.234"), cards.get(1).getBalance());
     }

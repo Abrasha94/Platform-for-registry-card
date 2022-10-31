@@ -108,7 +108,7 @@ public class AdminRestControllerV1 {
     public ResponseEntity<List<CardResponseDto>> sendMsg(@PathVariable(name = "cardNumber") String cardNumber, HttpServletRequest request) {
         cardService.sendMsg(cardNumber);
         try {
-            final List<CardResponseDto> cards = cardService.findCardsByUser();
+            final List<CardResponseDto> cards = cardService.findCardsByUser(request);
             return new ResponseEntity<>(cards, HttpStatus.OK);
         } catch (CardNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);

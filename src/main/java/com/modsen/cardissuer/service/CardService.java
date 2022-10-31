@@ -6,7 +6,12 @@ import com.modsen.cardissuer.dto.request.ChangeUsersInCardDto;
 import com.modsen.cardissuer.exception.BalanceNotFoundException;
 import com.modsen.cardissuer.exception.CardNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
-import com.modsen.cardissuer.model.*;
+import com.modsen.cardissuer.model.Balance;
+import com.modsen.cardissuer.model.Card;
+import com.modsen.cardissuer.model.PaySystem;
+import com.modsen.cardissuer.model.Type;
+import com.modsen.cardissuer.model.User;
+import com.modsen.cardissuer.model.UsersCards;
 import com.modsen.cardissuer.repository.CardRepository;
 import com.modsen.cardissuer.repository.UserRepository;
 import com.modsen.cardissuer.repository.UsersCardsRepository;
@@ -15,7 +20,6 @@ import com.modsen.cardissuer.util.MethodsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -50,9 +54,9 @@ public class CardService {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public List<CardResponseDto> findCardsByCompany() {
+    public List<CardResponseDto> findCardsByCompany(HttpServletRequest request) {
 
-        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(methodsUtil.getKeycloakUserId());
+        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(methodsUtil.getKeycloakUserId(request));
 
         if (optionalUser.isPresent()) {
             final List<Card> cardsByCompany = cardRepository.findByCompany(optionalUser.get().getCompany());
@@ -67,9 +71,9 @@ public class CardService {
         }
     }
 
-    public List<CardResponseDto> findCardsByUser() {
+    public List<CardResponseDto> findCardsByUser(HttpServletRequest request) {
 
-        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(methodsUtil.getKeycloakUserId());
+        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(methodsUtil.getKeycloakUserId(request));
 
         if (optionalUser.isPresent()) {
             final List<UsersCards> usersCards = usersCardsRepository.findByUserId(optionalUser.get().getId()).orElse(null);
@@ -88,7 +92,7 @@ public class CardService {
 
     public Card orderCard(CardOrderDto dto, HttpServletRequest request) {
 
-        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(methodsUtil.getKeycloakUserId());
+        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(methodsUtil.getKeycloakUserId(request));
         User user;
 
         if (optionalUser.isPresent()) {
@@ -169,7 +173,7 @@ public class CardService {
         kafkaTemplate.send("balanceRequest", msg);
     }
 
-    @KafkaListener(topics = "balanceResponse")
+//    @KafkaListener(topics = "balanceResponse")
     public void msgListener(Balance balance) {
         final Optional<Card> optionalCard = cardRepository.findById(balance.getCardNumber());
         if (optionalCard.isPresent()) {

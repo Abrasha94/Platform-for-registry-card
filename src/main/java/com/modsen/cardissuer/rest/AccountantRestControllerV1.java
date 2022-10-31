@@ -41,9 +41,9 @@ public class AccountantRestControllerV1 {
     }
 
     @GetMapping("cards")
-    public ResponseEntity<List<CardResponseDto>> getAllCard() {
+    public ResponseEntity<List<CardResponseDto>> getAllCard(HttpServletRequest request) {
         try {
-            final List<CardResponseDto> cards = cardService.findCardsByCompany();
+            final List<CardResponseDto> cards = cardService.findCardsByCompany(request);
             return new ResponseEntity<>(cards, HttpStatus.OK);
         } catch (NoSuchElementException | CardNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -52,7 +52,7 @@ public class AccountantRestControllerV1 {
 
     @PostMapping("register/users")
     public ResponseEntity<UserResponseDto> registerUserInCompany(@RequestBody AccountantRegisterUserDto dto, HttpServletRequest request) {
-        final User user = userService.saveInCompany(dto);
+        final User user = userService.saveInCompany(dto, request);
         if (user == null) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }

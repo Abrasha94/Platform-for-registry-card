@@ -67,10 +67,10 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User saveInCompany(AccountantRegisterUserDto dto) {
+    public User saveInCompany(AccountantRegisterUserDto dto, HttpServletRequest request) {
 
         final User reqUser = userRepository
-                .findByKeycloakUserId(methodsUtil.getKeycloakUserId())
+                .findByKeycloakUserId(methodsUtil.getKeycloakUserId(request))
                 .orElseThrow(() -> new UserNotFoundException("User not found!"));
 
         final User user = new User();
@@ -130,7 +130,7 @@ public class UserService {
     public void changePassword(ChangePasswordDto dto, HttpServletRequest request) {
 
         final User user = userRepository
-                .findByKeycloakUserId(methodsUtil.getKeycloakUserId())
+                .findByKeycloakUserId(methodsUtil.getKeycloakUserId(request))
                 .orElseThrow(() -> new UserNotFoundException("User not found!"));
 
         if (!encoder.matches(dto.getOldPass(), user.getPassword())) {
