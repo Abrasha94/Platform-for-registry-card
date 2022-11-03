@@ -16,6 +16,7 @@ import com.modsen.cardissuer.repository.CardRepository;
 import com.modsen.cardissuer.repository.UserRepository;
 import com.modsen.cardissuer.repository.UsersCardsRepository;
 import com.modsen.cardissuer.util.GenerateCardNumber;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -155,8 +156,7 @@ public class CardService {
         for (Card card : cards) {
             final Long cardNumber = card.getNumber();
             sendMsg(cardNumber.toString());
-            final ResponseEntity<Balance> responseEntity = restTemplate
-                    .getForEntity("http://localhost:8082/api/v1/balance/" + cardNumber, Balance.class);
+            final ResponseEntity<Balance> responseEntity = getBalance(restTemplate, cardNumber);
 
             if (responseEntity.getStatusCode() != HttpStatus.OK || responseEntity.getBody() == null) {
                 throw new BalanceNotFoundException("Balance do not found");
@@ -165,6 +165,16 @@ public class CardService {
             }
         }
         return cards;
+    }
+
+    @HystrixCommand(fallbackMethod = "fallbackBalance")
+    private ResponseEntity<Balance> getBalance(RestTemplate restTemplate, Long cardNumber) {
+
+        return restTemplate.getForEntity("http://localhost:8082/api/v1/balance/" + cardNumber, Balance.class);
+    }
+
+    private ResponseEntity<Balance> fallbackBalance(RestTemplate restTemplate, Long cardNumber) {
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
     public void sendMsg(String msg) {
