@@ -1,9 +1,9 @@
 package com.modsen.cardissuer.service;
 
+import com.modsen.cardissuer.client.BalanceClient;
 import com.modsen.cardissuer.dto.request.CardOrderDto;
 import com.modsen.cardissuer.dto.response.CardResponseDto;
 import com.modsen.cardissuer.dto.request.ChangeUsersInCardDto;
-import com.modsen.cardissuer.exception.BalanceNotFoundException;
 import com.modsen.cardissuer.exception.CardNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Balance;
@@ -17,12 +17,13 @@ import com.modsen.cardissuer.repository.UserRepository;
 import com.modsen.cardissuer.repository.UsersCardsRepository;
 import com.modsen.cardissuer.util.GenerateCardNumber;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
@@ -40,17 +41,19 @@ public class CardService {
     private final UsersCardsService usersCardsService;
     private final GenerateCardNumber generateCardNumber;
     private final KafkaTemplate<String, String> kafkaTemplate;
+    private final BalanceClient balanceClient;
 
     @Autowired
     public CardService(CardRepository cardRepository, UserRepository userRepository,
                        GenerateCardNumber generateCardNumber, UsersCardsRepository usersCardsRepository,
-                       UsersCardsService usersCardsService, KafkaTemplate<String, String> kafkaTemplate) {
+                       UsersCardsService usersCardsService, KafkaTemplate<String, String> kafkaTemplate, BalanceClient balanceClient) {
         this.cardRepository = cardRepository;
         this.userRepository = userRepository;
         this.generateCardNumber = generateCardNumber;
         this.usersCardsRepository = usersCardsRepository;
         this.usersCardsService = usersCardsService;
         this.kafkaTemplate = kafkaTemplate;
+        this.balanceClient = balanceClient;
     }
 
     public List<CardResponseDto> findCardsByCompany(HttpServletRequest request) {
@@ -62,7 +65,7 @@ public class CardService {
             if (cardsByCompany == null) {
                 throw new CardNotFoundException("Cards not found!");
             } else {
-                final List<Card> cardsWithBalance = addBalanceToCard(cardsByCompany);
+                final List<Card> cardsWithBalance = addBalanceToListOfCards(cardsByCompany);
                 return cardsWithBalance.stream().map(CardResponseDto::fromCard).collect(Collectors.toList());
             }
         } else {
@@ -81,7 +84,7 @@ public class CardService {
                 throw new CardNotFoundException("Cards not found!");
             } else {
                 final List<Card> cards = usersCards.stream().map(UsersCards::getCard).collect(Collectors.toList());
-                final List<Card> cardsWithBalance = addBalanceToCard(cards);
+                final List<Card> cardsWithBalance = addBalanceToListOfCards(cards);
                 return cardsWithBalance.stream().map(CardResponseDto::fromCard).collect(Collectors.toList());
             }
         } else {
@@ -149,39 +152,42 @@ public class CardService {
         }
     }
 
-    private List<Card> addBalanceToCard(List<Card> cards) {
-
-        final RestTemplate restTemplate = new RestTemplate();
+    private List<Card> addBalanceToListOfCards(List<Card> cards) {
 
         for (Card card : cards) {
             final Long cardNumber = card.getNumber();
             sendMsg(cardNumber.toString());
-            final ResponseEntity<Balance> responseEntity = getBalance(restTemplate, cardNumber);
-
-            if (responseEntity.getStatusCode() != HttpStatus.OK || responseEntity.getBody() == null) {
-                throw new BalanceNotFoundException("Balance do not found");
-            } else {
-                card.setBalance(responseEntity.getBody().getBalance());
-            }
+            card.setBalance(getBalanceFromCard(cardNumber).getBalance());
         }
+
         return cards;
     }
 
-    @HystrixCommand(fallbackMethod = "fallbackBalance")
-    private ResponseEntity<Balance> getBalance(RestTemplate restTemplate, Long cardNumber) {
+    @HystrixCommand(fallbackMethod = "fallbackBalance", commandProperties = {
+            @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "5000"),
+            @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "50"),
+            @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "5"),
+    })
+    @Cacheable("balanceCache")
+    public Balance getBalanceFromCard(Long cardNumber) {
 
-        return restTemplate.getForEntity("http://localhost:8082/api/v1/balance/" + cardNumber, Balance.class);
+        final ResponseEntity<Balance> response = balanceClient.getBalance(cardNumber);
+        if (response.getBody() == null || response.getStatusCode() == HttpStatus.NOT_FOUND) {
+            throw new CardNotFoundException("Card nor found!");
+        }
+        return response.getBody();
     }
 
-    private ResponseEntity<Balance> fallbackBalance(RestTemplate restTemplate, Long cardNumber) {
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    private Balance fallbackBalance(Long cardNumber) {
+        final Card card = cardRepository.findById(cardNumber).orElseThrow(() -> new CardNotFoundException("Card not found!"));
+        return new Balance(card.getBalance(), cardNumber);
     }
 
     public void sendMsg(String msg) {
         kafkaTemplate.send("balanceRequest", msg);
     }
 
-//    @KafkaListener(topics = "balanceResponse")
+    //    @KafkaListener(topics = "balanceResponse")
     public void msgListener(Balance balance) {
         final Optional<Card> optionalCard = cardRepository.findById(balance.getCardNumber());
         if (optionalCard.isPresent()) {

@@ -1,10 +1,11 @@
 package com.modsen.cardissuer.model;
 
-import lombok.Getter;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Getter
+@AllArgsConstructor
 public class Balance {
 
     private BigDecimal balance;

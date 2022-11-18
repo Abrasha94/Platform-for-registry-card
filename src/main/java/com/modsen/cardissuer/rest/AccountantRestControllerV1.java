@@ -12,6 +12,8 @@ import com.modsen.cardissuer.model.Card;
 import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.service.CardService;
 import com.modsen.cardissuer.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +33,8 @@ import java.util.NoSuchElementException;
 @RequestMapping("/api/v1/accountant/")
 public class AccountantRestControllerV1 {
 
+    Logger logger = LoggerFactory.getLogger(AccountantRestControllerV1.class);
+
     private final CardService cardService;
     private final UserService userService;
 
@@ -46,6 +50,7 @@ public class AccountantRestControllerV1 {
             final List<CardResponseDto> cards = cardService.findCardsByCompany(request);
             return new ResponseEntity<>(cards, HttpStatus.OK);
         } catch (NoSuchElementException | CardNotFoundException e) {
+            logger.error("Not found cards in accountant controller for company!");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
     }
@@ -54,6 +59,7 @@ public class AccountantRestControllerV1 {
     public ResponseEntity<UserResponseDto> registerUserInCompany(@RequestBody AccountantRegisterUserDto dto, HttpServletRequest request) {
         final User user = userService.saveInCompany(dto, request);
         if (user == null) {
+            logger.error("Something wrong with creating an user in accountant controller!");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(UserResponseDto.fromUser(user), HttpStatus.OK);
@@ -66,6 +72,7 @@ public class AccountantRestControllerV1 {
             final User user = userService.changePermission(id, dto);
             return new ResponseEntity<>(UserResponseDto.fromUser(user), HttpStatus.OK);
         } catch (UserNotFoundException e) {
+            logger.error("Something wrong with changing permissions to user in accountant controller!");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
     }
@@ -76,6 +83,7 @@ public class AccountantRestControllerV1 {
             final Card card = cardService.orderCard(dto, request);
             return new ResponseEntity<>(CardResponseDto.fromCard(card), HttpStatus.OK);
         } catch (UserNotFoundException e) {
+            logger.error("Something wrong with ordering card to user in accountant controller!");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
     }
@@ -87,6 +95,7 @@ public class AccountantRestControllerV1 {
             final Card card = cardService.addUser(number, dto);
             return new ResponseEntity<>(CardResponseDto.fromCard(card), HttpStatus.OK);
         } catch (CardNotFoundException e) {
+            logger.error("Something wrong with adding to card an user in accountant controller!");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
     }
