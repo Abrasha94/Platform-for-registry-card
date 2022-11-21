@@ -6,14 +6,10 @@ import com.modsen.cardissuer.dto.response.CardResponseDto;
 import com.modsen.cardissuer.dto.request.ChangeUserPermissionDto;
 import com.modsen.cardissuer.dto.request.ChangeUsersInCardDto;
 import com.modsen.cardissuer.dto.response.UserResponseDto;
-import com.modsen.cardissuer.exception.CardNotFoundException;
-import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Card;
 import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.service.CardService;
 import com.modsen.cardissuer.service.UserService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,14 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 
 @RestController
 @RequestMapping("/api/v1/accountant/")
 public class AccountantRestControllerV1 {
-
-    Logger logger = LoggerFactory.getLogger(AccountantRestControllerV1.class);
 
     private final CardService cardService;
     private final UserService userService;
@@ -46,57 +39,42 @@ public class AccountantRestControllerV1 {
 
     @GetMapping("cards")
     public ResponseEntity<List<CardResponseDto>> getAllCard(HttpServletRequest request) {
-        try {
-            final List<CardResponseDto> cards = cardService.findCardsByCompany(request);
-            return new ResponseEntity<>(cards, HttpStatus.OK);
-        } catch (NoSuchElementException | CardNotFoundException e) {
-            logger.error("Not found cards in accountant controller for company!");
+        final List<CardResponseDto> cards = cardService.findCardsByCompany(request);
+
+        if (cards.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
+
+        return new ResponseEntity<>(cards, HttpStatus.OK);
     }
 
     @PostMapping("register/users")
     public ResponseEntity<UserResponseDto> registerUserInCompany(@RequestBody AccountantRegisterUserDto dto, HttpServletRequest request) {
         final User user = userService.saveInCompany(dto, request);
-        if (user == null) {
-            logger.error("Something wrong with creating an user in accountant controller!");
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
+
         return new ResponseEntity<>(UserResponseDto.fromUser(user), HttpStatus.OK);
     }
 
     @PostMapping("users/{id}/permissions")
     public ResponseEntity<UserResponseDto> changeUserPermission(@PathVariable(name = "id") Long id,
                                                                 @RequestBody ChangeUserPermissionDto dto) {
-        try {
-            final User user = userService.changePermission(id, dto);
-            return new ResponseEntity<>(UserResponseDto.fromUser(user), HttpStatus.OK);
-        } catch (UserNotFoundException e) {
-            logger.error("Something wrong with changing permissions to user in accountant controller!");
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
+        final User user = userService.changePermission(id, dto);
+
+        return new ResponseEntity<>(UserResponseDto.fromUser(user), HttpStatus.OK);
     }
 
     @PostMapping("cards/order")
     public ResponseEntity<CardResponseDto> orderCard(@RequestBody CardOrderDto dto, HttpServletRequest request) {
-        try {
-            final Card card = cardService.orderCard(dto, request);
-            return new ResponseEntity<>(CardResponseDto.fromCard(card), HttpStatus.OK);
-        } catch (UserNotFoundException e) {
-            logger.error("Something wrong with ordering card to user in accountant controller!");
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
+        final Card card = cardService.orderCard(dto, request);
+
+        return new ResponseEntity<>(CardResponseDto.fromCard(card), HttpStatus.OK);
     }
 
     @PostMapping("cards/{number}/change")
     public ResponseEntity<CardResponseDto> addUsersInCard(@PathVariable(name = "number") Long number,
                                                           @RequestBody ChangeUsersInCardDto dto) {
-        try {
-            final Card card = cardService.addUser(number, dto);
-            return new ResponseEntity<>(CardResponseDto.fromCard(card), HttpStatus.OK);
-        } catch (CardNotFoundException e) {
-            logger.error("Something wrong with adding to card an user in accountant controller!");
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
+        final Card card = cardService.addUser(number, dto);
+
+        return new ResponseEntity<>(CardResponseDto.fromCard(card), HttpStatus.OK);
     }
 }

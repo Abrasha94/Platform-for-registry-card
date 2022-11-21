@@ -15,9 +15,12 @@ import com.modsen.cardissuer.model.UsersCards;
 import com.modsen.cardissuer.repository.CardRepository;
 import com.modsen.cardissuer.repository.UserRepository;
 import com.modsen.cardissuer.repository.UsersCardsRepository;
+import com.modsen.cardissuer.rest.AccountantRestControllerV1;
 import com.modsen.cardissuer.util.GenerateCardNumber;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
@@ -33,6 +36,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class CardService {
+
+    Logger logger = LoggerFactory.getLogger(AccountantRestControllerV1.class);
 
     public static final String HEADER_KEYCLOAKUSERID = "keycloakUserID";
     private final CardRepository cardRepository;

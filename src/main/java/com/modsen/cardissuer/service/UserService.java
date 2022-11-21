@@ -2,13 +2,11 @@ package com.modsen.cardissuer.service;
 
 import com.modsen.cardissuer.dto.request.AccountantRegisterUserDto;
 import com.modsen.cardissuer.dto.request.AdminRegisterUserDto;
-import com.modsen.cardissuer.dto.request.ChangePasswordDto;
 import com.modsen.cardissuer.dto.request.ChangeUserPermissionDto;
 import com.modsen.cardissuer.dto.request.ChangeUserStatusDto;
 import com.modsen.cardissuer.dto.response.UserResponseDto;
 import com.modsen.cardissuer.exception.CompanyNotFoundException;
 import com.modsen.cardissuer.exception.RoleNotFoundException;
-import com.modsen.cardissuer.exception.WrongPasswordException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Access;
 import com.modsen.cardissuer.model.Status;
@@ -17,6 +15,9 @@ import com.modsen.cardissuer.repository.AccessRepository;
 import com.modsen.cardissuer.repository.CompanyRepository;
 import com.modsen.cardissuer.repository.RoleRepository;
 import com.modsen.cardissuer.repository.UserRepository;
+import com.modsen.cardissuer.rest.AccountantRestControllerV1;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class UserService {
+
+    Logger logger = LoggerFactory.getLogger(AccountantRestControllerV1.class);
 
     public static final String HEADER_KEYCLOAKUSERID = "keycloakUserID";
     private final UserRepository userRepository;
@@ -124,22 +127,4 @@ public class UserService {
 
         return accountants.stream().map(UserResponseDto::fromUser).collect(Collectors.toList());
     }
-
-    public void changePassword(ChangePasswordDto dto, HttpServletRequest request) {
-
-        final User user = userRepository
-                .findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID))
-                .orElseThrow(() -> new UserNotFoundException("User not found!"));
-
-        if (!encoder.matches(dto.getOldPass(), user.getPassword())) {
-            throw new WrongPasswordException("Wrong old password!");
-        }
-
-        if (encoder.matches(dto.getNewPass(), user.getPassword())) {
-            throw new WrongPasswordException("Old and new password don't be the same!");
-        }
-
-        userRepository.updatePassword(encoder.encode(dto.getNewPass()), user.getId());
-    }
-
 }
