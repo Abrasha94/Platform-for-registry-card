@@ -19,7 +19,7 @@ public interface CardRepository extends JpaRepository<Card, Long> {
 
     @Transactional
     @Modifying
-    @Query("update Card c set c.balance = ?1 where c.number = ?2")
-    int updateCardBalance(BigDecimal balance, Long cardNumber);
+    @Query(value = "update Card c set c.balance = ?1 where c.number = ?2")
+    void updateCardBalance(BigDecimal balance, Long cardNumber);
 
 }
