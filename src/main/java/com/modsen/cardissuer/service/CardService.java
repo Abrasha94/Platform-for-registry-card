@@ -129,10 +129,9 @@ public class CardService {
         } else if (userRepository.findById(dto.getUserId()).isPresent()) {
             final UsersCards usersCards = new UsersCards();
             usersCards.setUser(userRepository.findById(dto.getUserId()).orElseThrow(() -> new UserNotFoundException("User not found!")));
-            final UsersCards saveUsersCards = usersCardsRepository.save(usersCards);
-            card.setUsersCards(Collections.singletonList(saveUsersCards));
+            card.setUsersCards(Collections.singletonList(usersCards));
             final Card saveCard = cardRepository.save(card);
-            usersCardsRepository.updateCard(saveCard, saveUsersCards.getId());
+            usersCardsRepository.save(usersCards);
             return saveCard;
         } else {
             throw new UserNotFoundException("User with id: " + dto.getUserId() + " not found!");

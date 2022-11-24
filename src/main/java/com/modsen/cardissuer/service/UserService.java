@@ -92,9 +92,9 @@ public class UserService {
         final User user = findById(id);
         user.setStatus(dto.getStatus());
 
-        userRepository.updateStatus(dto.getStatus(), id);
+        final User updatedUser = userRepository.save(user);
 
-        return user;
+        return updatedUser;
     }
 
     public User changePermission(Long id, ChangeUserPermissionDto dto) {
@@ -105,9 +105,9 @@ public class UserService {
                 .map(id1 -> accessRepository.findById(id1).orElseThrow(() -> new RoleNotFoundException("Role not found!")))
                 .collect(Collectors.toSet());
         user.setAccessSet(accessSet);
-        userRepository.updateAccess(accessSet, id);
+        final User updatedUser = userRepository.save(user);
 
-        return user;
+        return updatedUser;
     }
 
     public User findByName(String name) {

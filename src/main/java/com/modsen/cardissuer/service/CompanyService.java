@@ -4,6 +4,7 @@ import com.modsen.cardissuer.dto.request.ChangeCompanyStatusDto;
 import com.modsen.cardissuer.dto.response.CompanyResponseDto;
 import com.modsen.cardissuer.dto.request.RegisterCompanyDto;
 import com.modsen.cardissuer.exception.CompanyNotFoundException;
+import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Company;
 import com.modsen.cardissuer.model.Status;
 import com.modsen.cardissuer.model.User;
@@ -44,10 +45,13 @@ public class CompanyService {
             throw new CompanyNotFoundException("Company not found!");
         }
         company.setStatus(dto.getStatus());
-        companyRepository.updateStatus(dto.getStatus(), id);
+        companyRepository.save(company);
+
         final List<User> users = company.getUsers();
         for (User user : users) {
-            userRepository.updateStatus(dto.getStatus(), user.getId());
+            final User foundedUser = userRepository.findById(user.getId()).orElseThrow(() -> new UserNotFoundException("User not found!"));
+            foundedUser.setStatus(dto.getStatus());
+            userRepository.save(user);
         }
         return company;
     }

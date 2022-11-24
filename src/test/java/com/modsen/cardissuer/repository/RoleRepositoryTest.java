@@ -1,50 +1,75 @@
 package com.modsen.cardissuer.repository;
 
 import com.modsen.cardissuer.model.Role;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class RoleRepositoryTest {
+
+class RoleRepositoryTest extends AbstractRepositoryTest{
 
     @Autowired
     RoleRepository roleRepository;
 
+    Role role = new Role();
+
+    @BeforeEach
+    void setUp() {
+        role.setName("test");
+        roleRepository.save(role);
+    }
+
+
     @Test
-    void should_create_role() {
-        Role role = new Role();
-        role.setName("test role");
-        final Role savedRole = roleRepository.save(role);
-        assertEquals("test role", savedRole.getName());
+    void whenSaveRole_thenReturnRightRole() {
+        Role roleNew = new Role();
+        roleNew.setName("test name");
+
+        final Role saveRole = roleRepository.save(roleNew);
+
+        assertThat(saveRole.getName()).isEqualTo(roleNew.getName());
     }
 
     @Test
-    void should_find_role_by_id() {
-        final Role foundedRole = roleRepository.findById(2L).get();
-        assertEquals("moderator",foundedRole.getName());
+    void whenFindRoleById_thenReturnRole() {
+        final List<Role> all = roleRepository.findAll();
+
+        assertThat(all).isNotEmpty();
+
+        final Optional<Role> byId = roleRepository.findById(all.get(0).getId());
+
+        assertThat(byId).isPresent();
+        assertThat(byId.get()).isEqualTo(role);
     }
 
     @Test
-    void should_update_role_by_id() {
-        final Role foundedRole = roleRepository.findById(3L).get();
-        foundedRole.setName("test name");
-        roleRepository.save(foundedRole);
-        final Role changedRole = roleRepository.findById(3L).get();
-        assertEquals(foundedRole.getId(), changedRole.getId());
-        assertEquals("test name", changedRole.getName());
+    void whenUpdateRoleById_thenRoleUpdated() {
+        final List<Role> all = roleRepository.findAll();
+
+        assertThat(all).isNotEmpty();
+
+        final Role changedRole = roleRepository.findById(all.get(0).getId()).get();
+        changedRole.setName("test test");
+        final Role saveRole = roleRepository.save(changedRole);
+
+        assertThat(saveRole.getName()).isEqualTo(changedRole.getName());
     }
 
     @Test
-    void should_delete_role_by_id() {
-        roleRepository.deleteById(4L);
-        final List<Role> allRoles = roleRepository.findAll();
-        assertEquals(3, allRoles.size());
+    void whenDeleteById_thenRoleDeleted() {
+        final List<Role> all = roleRepository.findAll();
+
+        assertThat(all).isNotEmpty();
+
+        roleRepository.deleteById(all.get(0).getId());
+
+        final Optional<Role> byId = roleRepository.findById(all.get(0).getId());
+
+        assertThat(byId).isEmpty();
     }
 }

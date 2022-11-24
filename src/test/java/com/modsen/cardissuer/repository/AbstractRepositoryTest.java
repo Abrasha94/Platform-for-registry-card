@@ -19,8 +19,8 @@ abstract class AbstractRepositoryTest {
     public static PostgreSQLContainer<?> database = new PostgreSQLContainer<>("postgres:14")
             .withDatabaseName("testDb")
             .withUsername("test")
-            .withPassword("test")
-            .withInitScript("db.sql");
+            .withPassword("test");
+//            .withInitScript("db.sql");
 
     @DynamicPropertySource
     static void setDatasourceProperties(DynamicPropertyRegistry propertyRegistry) {
