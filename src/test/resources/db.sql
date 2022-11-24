@@ -18,5 +18,5 @@ create table test.cards
     balance    decimal,
     CONSTRAINT pk_cards PRIMARY KEY (number)
 );
-ALTER TABLE cards
+ALTER TABLE test.cards
     ADD CONSTRAINT FK_CARDS_ON_COMPANY FOREIGN KEY (company_id) REFERENCES companies (id);

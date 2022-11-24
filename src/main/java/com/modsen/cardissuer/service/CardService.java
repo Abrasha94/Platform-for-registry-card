@@ -83,7 +83,7 @@ public class CardService {
         final Optional<User> optionalUser = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID));
 
         if (optionalUser.isPresent()) {
-            final List<UsersCards> usersCards = usersCardsRepository.findByUserId(optionalUser.get().getId()).orElse(null);
+            final List<UsersCards> usersCards = usersCardsRepository.findByUserId(optionalUser.get().getId());
 
             if (usersCards == null) {
                 throw new CardNotFoundException("Cards not found!");
@@ -195,7 +195,9 @@ public class CardService {
     public void msgListener(Balance balance) {
         final Optional<Card> optionalCard = cardRepository.findById(balance.getCardNumber());
         if (optionalCard.isPresent()) {
-            cardRepository.updateCardBalance(balance.getBalance(), balance.getCardNumber());
+            final Card card = optionalCard.get();
+            card.setBalance(balance.getBalance());
+            cardRepository.save(card);
         }
     }
 }

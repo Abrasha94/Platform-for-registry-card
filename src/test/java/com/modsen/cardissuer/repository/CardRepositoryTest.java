@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CardRepositoryTest extends AbstractRepositoryTest {
 
@@ -33,8 +32,8 @@ class CardRepositoryTest extends AbstractRepositoryTest {
         card.setStatus("test");
         card.setType(Type.PERSONAL);
         card.setPaySystem(PaySystem.MASTERCARD);
-        card.setCompany(company);
-        companyRepository.save(company);
+        final Company savedCompany = companyRepository.save(company);
+        card.setCompany(savedCompany);
         cardRepository.save(card);
     }
 
@@ -45,7 +44,6 @@ class CardRepositoryTest extends AbstractRepositoryTest {
 
         assertThat(savedCard.getNumber()).isEqualTo(321L);
         assertThat(savedCard.getStatus()).isEqualTo("test");
-        assertThat(savedCard.getCompany().getId()).isEqualTo(1L);
     }
 
     @Test
@@ -59,18 +57,30 @@ class CardRepositoryTest extends AbstractRepositoryTest {
 
     @Test
     void whenFindCardByCompany_thenCardFounded() {
-        final List<Card> cardList = cardRepository.findByCompany(company);
+        final List<Company> companyList = companyRepository.findAll();
+
+        assertThat(companyList).isNotEmpty();
+
+        final List<Card> cardList = cardRepository.findByCompany(companyList.get(0));
+
+        assertThat(cardList).isNotEmpty();
+
         final Card foundedCard = cardList.get(0);
 
         assertThat(foundedCard).isEqualTo(card);
     }
 
     @Test
-    void whenUpdateBalanceById_thenCardUpdated() {
-        cardRepository.updateCardBalance(BigDecimal.TEN, 123L);
-        final Card byId = cardRepository.findById(123L).get();
+    void whenUpdateCardById_thenCardUpdated() {
+        final List<Card> all = cardRepository.findAll();
 
-        assertThat(byId.getBalance()).isEqualTo(BigDecimal.TEN);
+        assertThat(all).isNotEmpty();
+
+        final Card changedCard = cardRepository.findById(all.get(0).getNumber()).get();
+        changedCard.setBalance(BigDecimal.TEN);
+        final Card saveCard = cardRepository.save(changedCard);
+
+        assertThat(saveCard.getBalance()).isEqualTo(BigDecimal.TEN);
     }
 
     @Test
