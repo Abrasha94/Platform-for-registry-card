@@ -28,10 +28,6 @@ public class CompanyService {
         this.userRepository = userRepository;
     }
 
-    public List<Company> getAllCompanies() {
-        return companyRepository.findAll();
-    }
-
     public Company save(RegisterCompanyDto registerCompanyDto) {
         final Company company = new Company();
         company.setName(registerCompanyDto.getName());
@@ -40,28 +36,29 @@ public class CompanyService {
     }
 
     public Company changeStatus(Long id, ChangeCompanyStatusDto dto) {
-        final Company company = findById(id);
-        if (company == null) {
-            throw new CompanyNotFoundException("Company not found!");
-        }
+        final Company company = companyRepository.findById(id).orElseThrow(() -> new CompanyNotFoundException("Company not found!"));
         company.setStatus(dto.getStatus());
-        companyRepository.save(company);
+        final Company savedCompany = companyRepository.save(company);
 
-        final List<User> users = company.getUsers();
+        final List<User> users = savedCompany.getUsers();
         for (User user : users) {
             final User foundedUser = userRepository.findById(user.getId()).orElseThrow(() -> new UserNotFoundException("User not found!"));
             foundedUser.setStatus(dto.getStatus());
             userRepository.save(user);
         }
-        return company;
+
+        return savedCompany;
     }
 
     public Company findById(Long id) {
-        return companyRepository.findById(id).orElse(null);
+        return companyRepository.findById(id).orElseThrow(() -> new CompanyNotFoundException("Company not found!"));
     }
 
     public List<CompanyResponseDto> findAll() {
         final List<Company> companies = companyRepository.findAll();
+        if (companies.isEmpty()) {
+            throw new CompanyNotFoundException("Company not found!");
+        }
         return companies.stream()
                 .map(CompanyResponseDto::fromCompany)
                 .collect(Collectors.toList());

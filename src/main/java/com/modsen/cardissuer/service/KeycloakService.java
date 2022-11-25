@@ -3,12 +3,10 @@ package com.modsen.cardissuer.service;
 import com.modsen.cardissuer.configuration.KeycloakManager;
 import com.modsen.cardissuer.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 
 @Service
