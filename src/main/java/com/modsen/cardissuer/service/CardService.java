@@ -63,57 +63,44 @@ public class CardService {
 
     public List<CardResponseDto> findCardsByCompany(HttpServletRequest request) {
 
-        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID));
+        final User user = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID))
+                .orElseThrow(() -> new UserNotFoundException("User not found!"));
 
-        if (optionalUser.isPresent()) {
-            final List<Card> cardsByCompany = cardRepository.findByCompany(optionalUser.get().getCompany());
-            if (cardsByCompany == null) {
-                throw new CardNotFoundException("Cards not found!");
-            } else {
-                final List<Card> cardsWithBalance = addBalanceToListOfCards(cardsByCompany);
-                return cardsWithBalance.stream().map(CardResponseDto::fromCard).collect(Collectors.toList());
-            }
+        final List<Card> cardsByCompany = cardRepository.findByCompany(user.getCompany());
+        if (cardsByCompany.isEmpty()) {
+            throw new CardNotFoundException("Cards not found!");
         } else {
-            throw new UserNotFoundException("User not found!");
+            final List<Card> cardsWithBalance = addBalanceToListOfCards(cardsByCompany);
+            return cardsWithBalance.stream().map(CardResponseDto::fromCard).collect(Collectors.toList());
         }
     }
 
     public List<CardResponseDto> findCardsByUser(HttpServletRequest request) {
 
-        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID));
+        final User user = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID))
+                .orElseThrow(() -> new UserNotFoundException("User not found!"));
 
-        if (optionalUser.isPresent()) {
-            final List<UsersCards> usersCards = usersCardsRepository.findByUserId(optionalUser.get().getId());
+        final List<UsersCards> usersCardsList = usersCardsRepository.findByUserId(user.getId());
 
-            if (usersCards == null) {
-                throw new CardNotFoundException("Cards not found!");
-            } else {
-                final List<Card> cards = usersCards.stream().map(UsersCards::getCard).collect(Collectors.toList());
-                final List<Card> cardsWithBalance = addBalanceToListOfCards(cards);
-                return cardsWithBalance.stream().map(CardResponseDto::fromCard).collect(Collectors.toList());
-            }
+        if (usersCardsList.isEmpty()) {
+            throw new CardNotFoundException("Cards not found!");
         } else {
-            throw new UserNotFoundException("User not found!");
+            final List<Card> cards = usersCardsList.stream().map(UsersCards::getCard).collect(Collectors.toList());
+            final List<Card> cardsWithBalance = addBalanceToListOfCards(cards);
+            return cardsWithBalance.stream().map(CardResponseDto::fromCard).collect(Collectors.toList());
         }
     }
 
     public Card orderCard(CardOrderDto dto, HttpServletRequest request) {
 
-        final Optional<User> optionalUser = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID));
-        User user;
-
-        if (optionalUser.isPresent()) {
-            user = optionalUser.get();
-        } else {
-            throw new UserNotFoundException("User not found!");
-        }
+        final User requestUser = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID))
+                .orElseThrow(() -> new UserNotFoundException("User not found!"));
 
         final Card card = new Card();
 
         if (PaySystem.VISA.equals(dto.getPaySystem())) {
             card.setNumber(generateCardNumber.generateVisa());
         }
-
         if (PaySystem.MASTERCARD.equals(dto.getPaySystem())) {
             card.setNumber(generateCardNumber.generateMasterCard());
         }
@@ -121,20 +108,23 @@ public class CardService {
         card.setStatus("In order");
         card.setType(dto.getType());
         card.setPaySystem(dto.getPaySystem());
-        card.setCompany(user.getCompany());
+        card.setCompany(requestUser.getCompany());
 
         if (dto.getUserId() == null) {
             card.setUsersCards(null);
             return cardRepository.save(card);
-        } else if (userRepository.findById(dto.getUserId()).isPresent()) {
-            final UsersCards usersCards = new UsersCards();
-            usersCards.setUser(userRepository.findById(dto.getUserId()).orElseThrow(() -> new UserNotFoundException("User not found!")));
-            card.setUsersCards(Collections.singletonList(usersCards));
-            final Card saveCard = cardRepository.save(card);
-            usersCardsRepository.save(usersCards);
-            return saveCard;
         } else {
-            throw new UserNotFoundException("User with id: " + dto.getUserId() + " not found!");
+            final User user = userRepository.findById(dto.getUserId())
+                    .orElseThrow(() -> new UserNotFoundException("User not found!"));
+
+            final UsersCards usersCards = new UsersCards();
+            usersCards.setUser(user);
+
+            card.setUsersCards(Collections.singletonList(usersCards));
+
+            final Card savedCard = cardRepository.save(card);
+            usersCardsRepository.save(usersCards);
+            return savedCard;
         }
     }
 
@@ -177,7 +167,7 @@ public class CardService {
 
         final ResponseEntity<Balance> response = balanceClient.getBalance(cardNumber);
         if (response.getBody() == null || response.getStatusCode() == HttpStatus.NOT_FOUND) {
-            throw new CardNotFoundException("Card nor found!");
+            throw new CardNotFoundException("Card not found!");
         }
         return response.getBody();
     }

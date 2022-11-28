@@ -5,6 +5,9 @@ import com.modsen.cardissuer.dto.request.AdminRegisterUserDto;
 import com.modsen.cardissuer.dto.request.ChangeUserPermissionDto;
 import com.modsen.cardissuer.dto.request.ChangeUserStatusDto;
 import com.modsen.cardissuer.dto.response.UserResponseDto;
+import com.modsen.cardissuer.exception.CompanyNotFoundException;
+import com.modsen.cardissuer.exception.RoleNotFoundException;
+import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Access;
 import com.modsen.cardissuer.model.Company;
 import com.modsen.cardissuer.model.Role;
@@ -29,6 +32,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -91,6 +95,33 @@ class UserServiceTest {
     }
 
     @Test
+    void whenSaveUserIsBad_thenThrowException() {
+        when(companyRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.save(
+                new AdminRegisterUserDto("test", "test", 1L, 1L, Set.of(1L))))
+                .isInstanceOf(CompanyNotFoundException.class)
+                .hasMessage("Company not found!");
+
+        when(companyRepository.findById(1L)).thenReturn(Optional.of(new Company()));
+        when(roleRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.save(
+                new AdminRegisterUserDto("test", "test", 1L, 1L, Set.of(1L))))
+                .isInstanceOf(RoleNotFoundException.class)
+                .hasMessage("Role not found!");
+
+        when(roleRepository.findById(1L)).thenReturn(Optional.of(new Role()));
+        when(accessRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.save(
+                new AdminRegisterUserDto("test", "test", 1L, 1L, Set.of(1L))))
+                .isInstanceOf(RoleNotFoundException.class)
+                .hasMessage("Role not found!");
+    }
+
+
+    @Test
     void whenSaveInCompany_thenReturnRightUser() {
         when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.of(user));
         when(encoder.encode("test")).thenReturn("test");
@@ -110,6 +141,30 @@ class UserServiceTest {
     }
 
     @Test
+    void whenSaveInCompanyIsBad_thenThrowExceptions() {
+        when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.saveInCompany(new AccountantRegisterUserDto("test", "test"), request))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found!");
+
+        when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.of(user));
+        when(encoder.encode("test")).thenReturn("test");
+        when(roleRepository.findById(4L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.saveInCompany(new AccountantRegisterUserDto("test", "test"), request))
+                .isInstanceOf(RoleNotFoundException.class)
+                .hasMessage("Role not found!");
+
+        when(roleRepository.findById(4L)).thenReturn(Optional.of(new Role()));
+        when(accessRepository.findById(4L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.saveInCompany(new AccountantRegisterUserDto("test", "test"), request))
+                .isInstanceOf(RoleNotFoundException.class)
+                .hasMessage("Role not found!");
+    }
+
+    @Test
     void whenChangeStatus_thenReturnUpdatedUser() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
@@ -119,6 +174,15 @@ class UserServiceTest {
         verify(userRepository, times(1)).findById(1L);
         verify(userRepository, times(1)).save(any(User.class));
         assertThat(changedUser).isEqualTo(user);
+    }
+
+    @Test
+    void whenChangeStatusIsBad_thenThrowException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.changeStatus(1L, new ChangeUserStatusDto(Status.BANNED)))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found!");
     }
 
     @Test
@@ -136,6 +200,22 @@ class UserServiceTest {
     }
 
     @Test
+    void whenChangePermissionIsBad_thenThrowExceptions() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.changePermission(1L, new ChangeUserPermissionDto(Set.of(5L))))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found!");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(accessRepository.findById(5L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.changePermission(1L, new ChangeUserPermissionDto(Set.of(5L))))
+                .isInstanceOf(RoleNotFoundException.class)
+                .hasMessage("Role not found!");
+    }
+
+    @Test
     void whenFindByName_thenReturnFoundedUser() {
         when(userRepository.findByName("test")).thenReturn(Optional.of(user));
 
@@ -146,6 +226,16 @@ class UserServiceTest {
     }
 
     @Test
+    void whenFindByNameIsBad_thenThrowException() {
+        when(userRepository.findByName("test")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.findByName("test"))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found!");
+    }
+
+
+    @Test
     void whenFindById_thenReturnFoundedUser() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
@@ -153,6 +243,15 @@ class UserServiceTest {
 
         verify(userRepository, times(1)).findById(1L);
         assertThat(foundedUser).isEqualTo(user);
+    }
+
+    @Test
+    void whenFindByIdIsBad_thenThrowException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.findById(1L))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found!");
     }
 
     @Test
@@ -166,5 +265,14 @@ class UserServiceTest {
         verify(userRepository, times(1)).findByRole(any(Role.class));
         assertThat(allAccountants.size()).isEqualTo(1);
         assertThat(allAccountants.get(0).getId()).isEqualTo(1L);
+    }
+
+    @Test
+    void whenFindAllAccountantsIsBad_thenThrowException() {
+        when(roleRepository.findById(3L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.findAllAccountants())
+                .isInstanceOf(RoleNotFoundException.class)
+                .hasMessage("Role not found!");
     }
 }

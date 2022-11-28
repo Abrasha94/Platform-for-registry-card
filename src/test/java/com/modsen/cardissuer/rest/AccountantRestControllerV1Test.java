@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import javax.servlet.http.HttpServletRequest;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -77,6 +78,15 @@ class AccountantRestControllerV1Test {
                 .body("$.size()", equalTo(1))
                 .body("[0].number", equalTo(1))
                 .body("[0].status", equalTo("test"));
+    }
+
+    @Test
+    void whenGetAllCardEmptyList_thenReturnNoContent() {
+        when(cardService.findCardsByCompany(any(HttpServletRequest.class))).thenReturn(Collections.emptyList());
+
+        given()
+                .when().get("/api/v1/accountant/cards")
+                .then().statusCode(204);
     }
 
     @Test

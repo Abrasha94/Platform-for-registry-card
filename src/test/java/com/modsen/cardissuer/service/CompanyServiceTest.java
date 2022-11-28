@@ -3,6 +3,8 @@ package com.modsen.cardissuer.service;
 import com.modsen.cardissuer.dto.request.ChangeCompanyStatusDto;
 import com.modsen.cardissuer.dto.request.RegisterCompanyDto;
 import com.modsen.cardissuer.dto.response.CompanyResponseDto;
+import com.modsen.cardissuer.exception.CompanyNotFoundException;
+import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Company;
 import com.modsen.cardissuer.model.Status;
 import com.modsen.cardissuer.model.User;
@@ -15,10 +17,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -74,6 +78,23 @@ class CompanyServiceTest {
     }
 
     @Test
+    void whenChangeStatusIsBad_thenThrowExceptions() {
+        when(companyRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> companyService.changeStatus(1L, new ChangeCompanyStatusDto(Status.BANNED)))
+                .isInstanceOf(CompanyNotFoundException.class)
+                .hasMessage("Company not found!");
+
+        when(companyRepository.findById(1L)).thenReturn(Optional.of(company));
+        when(companyRepository.save(any(Company.class))).thenReturn(company);
+        when(userRepository.findById(any())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> companyService.changeStatus(1L, new ChangeCompanyStatusDto(Status.BANNED)))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found!");
+    }
+
+    @Test
     void whenFindById_thenCompanyFounded() {
         when(companyRepository.findById(1L)).thenReturn(Optional.of(company));
 
@@ -84,6 +105,15 @@ class CompanyServiceTest {
     }
 
     @Test
+    void whenFindByIdIsNotFind_thenThrowException() {
+        when(companyRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> companyService.findById(1L))
+                .isInstanceOf(CompanyNotFoundException.class)
+                .hasMessage("Company not found!");
+    }
+
+    @Test
     void whenFindAll_thenReturnRightDto() {
         when(companyRepository.findAll()).thenReturn(List.of(company));
 
@@ -91,5 +121,14 @@ class CompanyServiceTest {
 
         verify(companyRepository, times(1)).findAll();
         assertThat(all.get(0).getName()).isEqualTo(company.getName());
+    }
+
+    @Test
+    void whenFindAllEmptyList_thenThrowException() {
+        when(companyRepository.findAll()).thenReturn(Collections.emptyList());
+
+        assertThatThrownBy(() -> companyService.findAll())
+                .isInstanceOf(CompanyNotFoundException.class)
+                .hasMessage("Company not found!");
     }
 }

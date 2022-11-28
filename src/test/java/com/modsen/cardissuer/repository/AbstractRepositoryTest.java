@@ -5,21 +5,21 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 
 @DataJpaTest
-@Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 abstract class AbstractRepositoryTest {
 
-    @Container
-    public static PostgreSQLContainer<?> database = new PostgreSQLContainer<>("postgres:14")
+    static final PostgreSQLContainer database = new PostgreSQLContainer("postgres:14")
             .withDatabaseName("testDb")
             .withUsername("test")
             .withPassword("test");
 //            .withInitScript("db.sql");
+
+    static {
+        database.start();
+    }
 
     @DynamicPropertySource
     static void setDatasourceProperties(DynamicPropertyRegistry propertyRegistry) {

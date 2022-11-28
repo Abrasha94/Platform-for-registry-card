@@ -4,7 +4,15 @@ import com.modsen.cardissuer.client.BalanceClient;
 import com.modsen.cardissuer.dto.request.CardOrderDto;
 import com.modsen.cardissuer.dto.request.ChangeUsersInCardDto;
 import com.modsen.cardissuer.dto.response.CardResponseDto;
-import com.modsen.cardissuer.model.*;
+import com.modsen.cardissuer.exception.CardNotFoundException;
+import com.modsen.cardissuer.exception.UserNotFoundException;
+import com.modsen.cardissuer.model.Balance;
+import com.modsen.cardissuer.model.Card;
+import com.modsen.cardissuer.model.Company;
+import com.modsen.cardissuer.model.PaySystem;
+import com.modsen.cardissuer.model.Type;
+import com.modsen.cardissuer.model.User;
+import com.modsen.cardissuer.model.UsersCards;
 import com.modsen.cardissuer.repository.CardRepository;
 import com.modsen.cardissuer.repository.UserRepository;
 import com.modsen.cardissuer.repository.UsersCardsRepository;
@@ -24,12 +32,16 @@ import org.springframework.util.concurrent.ListenableFuture;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CardServiceTest {
@@ -96,6 +108,31 @@ class CardServiceTest {
     }
 
     @Test
+    void whenFindCardsByCompanyIsBad_thenThrowExceptions() {
+        when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cardService.findCardsByCompany(request))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found!");
+
+        when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.of(new User()));
+        when(cardRepository.findByCompany(any())).thenReturn(Collections.emptyList());
+
+        assertThatThrownBy(() -> cardService.findCardsByCompany(request))
+                .isInstanceOf(CardNotFoundException.class)
+                .hasMessage("Cards not found!");
+
+        when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.of(new User()));
+        when(cardRepository.findByCompany(any())).thenReturn(List.of(card1, card2));
+        when(kafkaTemplate.send(any(), any())).thenReturn(mock(ListenableFuture.class));
+        when(balanceClient.getBalance(any())).thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        assertThatThrownBy(() -> cardService.findCardsByCompany(request))
+                .isInstanceOf(CardNotFoundException.class)
+                .hasMessage("Card not found!");
+    }
+
+    @Test
     void whenFindCardsByUser_thenReturnRightDto() {
         when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.of(new User()));
         when(usersCardsRepository.findByUserId(any())).thenReturn(List.of(usersCards));
@@ -110,36 +147,95 @@ class CardServiceTest {
     }
 
     @Test
-    void whenOrderCard_thenReturnRightCard() {
-        final CardOrderDto cardOrderDto = new CardOrderDto(Type.PERSONAL, PaySystem.VISA, 1L);
-        final User user = new User();
+    void whenFindCardsByUserIsBad_thenThrowExceptions() {
+        when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.empty());
 
-        when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.of(user));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        assertThatThrownBy(() -> cardService.findCardsByUser(request))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found!");
+
+        when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.of(new User()));
+        when(usersCardsRepository.findByUserId(any())).thenReturn(Collections.emptyList());
+
+        assertThatThrownBy(() -> cardService.findCardsByUser(request))
+                .isInstanceOf(CardNotFoundException.class)
+                .hasMessage("Cards not found!");
+    }
+
+    @Test
+    void whenOrderCard_thenReturnRightCard() {
+        when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.of(new User()));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(new User()));
         when(cardRepository.save(any())).thenReturn(card1);
         when(generateCardNumber.generateVisa()).thenReturn(666L);
         when(usersCardsRepository.save(any())).thenReturn(new UsersCards());
 
-        final Card card = cardService.orderCard(cardOrderDto, request);
+        final Card card = cardService.orderCard(new CardOrderDto(Type.PERSONAL, PaySystem.VISA, 1L), request);
 
         Mockito.verify(userRepository, times(1)).findByKeycloakUserId(any());
         Mockito.verify(cardRepository, times(1)).save(any());
         assertThat(card).isEqualTo(card1);
+
+
+        when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.of(new User()));
+        when(cardRepository.save(any(Card.class))).thenReturn(card1);
+        when(generateCardNumber.generateVisa()).thenReturn(666L);
+
+        final Card cardWithNullUsersCards = cardService.orderCard(new CardOrderDto(Type.PERSONAL, PaySystem.VISA, null), request);
+
+        Mockito.verify(userRepository, times(2)).findByKeycloakUserId(any());
+        Mockito.verify(cardRepository, times(2)).save(any());
+        assertThat(cardWithNullUsersCards).isEqualTo(card1);
+    }
+
+    @Test
+    void whenOrderCardIsBad_thenThrowExceptions() {
+        when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cardService.orderCard(new CardOrderDto(Type.PERSONAL, PaySystem.VISA, 1L), request))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found!");
+
+        when(userRepository.findByKeycloakUserId(any())).thenReturn(Optional.of(new User()));
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cardService.orderCard(new CardOrderDto(Type.PERSONAL, PaySystem.VISA, 1L), request))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found!");
     }
 
     @Test
     void whenAddUserToCard_thenReturnRightCard() {
-        final ChangeUsersInCardDto cardDto = new ChangeUsersInCardDto(List.of(1L, 2L));
-        final User user = new User();
-
         when(cardRepository.findById(1L)).thenReturn(Optional.of(card2));
-        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+        when(userRepository.findById(any())).thenReturn(Optional.of(new User()));
         when(usersCardsService.save(any(), any())).thenReturn(new UsersCards());
 
-        final Card card = cardService.addUser(1L, cardDto);
+        final Card card = cardService.addUser(1L, new ChangeUsersInCardDto(List.of(1L, 2L)));
 
         Mockito.verify(userRepository, times(2)).findById(any());
         Mockito.verify(cardRepository, times(1)).findById(1L);
         assertThat(card.getNumber()).isEqualTo(2L);
+    }
+
+    @Test
+    void whenAddUserToCardIsBad_thenThrowExceptions() {
+        when(cardRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cardService.addUser(1L, new ChangeUsersInCardDto(List.of(1L, 2L))))
+                .isInstanceOf(CardNotFoundException.class)
+                .hasMessage("Card not found!");
+
+        when(cardRepository.findById(1L)).thenReturn(Optional.of(card1));
+
+        assertThatThrownBy(() -> cardService.addUser(1L, new ChangeUsersInCardDto(List.of(1L, 2L))))
+                .isInstanceOf(CardNotFoundException.class)
+                .hasMessage("This card are personal!");
+
+        when(cardRepository.findById(1L)).thenReturn(Optional.of(card2));
+        when(userRepository.findById(any())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cardService.addUser(1L, new ChangeUsersInCardDto(List.of(1L, 2L))))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found!");
     }
 }
