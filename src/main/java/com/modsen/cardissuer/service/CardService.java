@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 @Service
 public class CardService {
 
-    Logger logger = LoggerFactory.getLogger(AccountantRestControllerV1.class);
+    private Logger logger = LoggerFactory.getLogger(AccountantRestControllerV1.class);
 
     public static final String HEADER_KEYCLOAKUSERID = "keycloakUserID";
     private final CardRepository cardRepository;

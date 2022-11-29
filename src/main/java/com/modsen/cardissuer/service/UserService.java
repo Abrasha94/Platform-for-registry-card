@@ -32,7 +32,10 @@ import java.util.stream.Collectors;
 @Service
 public class UserService {
 
-    Logger logger = LoggerFactory.getLogger(AccountantRestControllerV1.class);
+    public static final long ID = 4L;
+    public static final long ACCOUNTANT_ID = 3L;
+
+    private Logger logger = LoggerFactory.getLogger(AccountantRestControllerV1.class);
 
     public static final String HEADER_KEYCLOAKUSERID = "keycloakUserID";
     private final UserRepository userRepository;
@@ -79,9 +82,9 @@ public class UserService {
         user.setPassword(encoder.encode(dto.getPassword()));
         user.setStatus(Status.ACTIVE);
         user.setCompany(reqUser.getCompany());
-        user.setRole(roleRepository.findById(4L).orElseThrow(() -> new RoleNotFoundException("Role not found!")));
+        user.setRole(roleRepository.findById(ID).orElseThrow(() -> new RoleNotFoundException("Role not found!")));
         user.setAccessSet(Collections.singleton(accessRepository
-                .findById(4L)
+                .findById(ID)
                 .orElseThrow(() -> new RoleNotFoundException("Role not found!"))));
 
         return userRepository.save(user);
@@ -120,7 +123,7 @@ public class UserService {
     public List<UserResponseDto> findAllAccountants() {
 
         final List<User> accountants = userRepository.findByRole(
-                roleRepository.findById(3L).orElseThrow(() -> new RoleNotFoundException("Role not found!")));
+                roleRepository.findById(ACCOUNTANT_ID).orElseThrow(() -> new RoleNotFoundException("Role not found!")));
 
         return accountants.stream().map(UserResponseDto::fromUser).collect(Collectors.toList());
     }

@@ -178,6 +178,12 @@
 			<artifactId>spring-mock-mvc</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-ui</artifactId>
+			<version>1.6.13</version>
+		</dependency>
 	</dependencies>
 
 	<dependencyManagement>
@@ -204,12 +210,20 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>3.2.0</version>
 				<configuration>
 					<failsOnError>true</failsOnError>
 					<configLocation>checkstyle.xml</configLocation>
 					<consoleOutput>true</consoleOutput>
 				</configuration>
+				<executions>
+					<execution>
+						<id>validate</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>

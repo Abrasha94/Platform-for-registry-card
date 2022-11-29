@@ -29,7 +29,7 @@ import java.util.List;
 @RequestMapping("/api/v1/admin/")
 public class AdminRestControllerV1 {
 
-    Logger logger = LoggerFactory.getLogger(AdminRestControllerV1.class);
+    private Logger logger = LoggerFactory.getLogger(AdminRestControllerV1.class);
 
     private final UserService userService;
     private final CompanyService companyService;
