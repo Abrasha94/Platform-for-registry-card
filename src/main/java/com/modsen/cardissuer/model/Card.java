@@ -16,6 +16,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Version;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
@@ -53,6 +54,10 @@ public class Card {
 
     @Column(name = "balance")
     private BigDecimal balance;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
 
     @Override
     public boolean equals(Object o) {
