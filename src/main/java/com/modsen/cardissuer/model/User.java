@@ -34,18 +34,6 @@ public class User extends BaseEntity {
     @ToString.Exclude
     private Company company;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id", nullable = false)
-    @ToString.Exclude
-    private Role role;
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "user_permissions",
-    joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
-    inverseJoinColumns = {@JoinColumn(name = "access_id", referencedColumnName = "id")})
-    @ToString.Exclude
-    private Set<Access> accessSet;
-
     @OneToMany(mappedBy = "user")
     private List<UsersCards> usersCards;
 

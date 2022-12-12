@@ -19,17 +19,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByName(String name);
 
-    List<User> findByRole(Role role);
-
     @Transactional
     @Modifying
     @Query("update User u set u.status = ?1 where u.id = ?2")
     void updateStatus(Status status, Long userId);
-
-    @Transactional
-    @Modifying
-    @Query("update User u set u.accessSet = ?1 where u.id = ?2")
-    void updateAccess(Set<Access> accessSet, Long userId);
 
     @Transactional
     @Modifying

@@ -18,6 +18,7 @@ import com.modsen.cardissuer.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -26,6 +27,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/admin/")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminRestControllerV1 {
 
     private final UserService userService;
@@ -92,16 +94,6 @@ public class AdminRestControllerV1 {
     public ResponseEntity<List<CompanyResponseDto>> getAllCompanies() {
         final List<CompanyResponseDto> companies = companyService.findAll();
         return new ResponseEntity<>(companies, HttpStatus.OK);
-    }
-
-    @GetMapping("users/accountants")
-    public ResponseEntity<List<UserResponseDto>> getAllAccountants() {
-        try {
-            final List<UserResponseDto> allAccountants = userService.findAllAccountants();
-            return new ResponseEntity<>(allAccountants, HttpStatus.OK);
-        } catch (UserNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
     }
 
     @GetMapping("{cardNumber}")

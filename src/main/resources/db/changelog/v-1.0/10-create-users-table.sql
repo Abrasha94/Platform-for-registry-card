@@ -6,7 +6,6 @@ CREATE TABLE users
     password       VARCHAR                                 NOT NULL,
     status         VARCHAR(10) DEFAULT 'ACTIVE'            NOT NULL,
     companies_id   BIGINT                                  NOT NULL,
-    role_id        BIGINT                                  NOT NULL,
     CONSTRAINT pk_users PRIMARY KEY (id)
 );
 
@@ -17,9 +16,3 @@ ALTER TABLE users
 
 ALTER TABLE users
     ADD CONSTRAINT FK_USERS_ON_COMPANIES FOREIGN KEY (companies_id) REFERENCES companies (id);
-
-ALTER TABLE users
-    ADD CONSTRAINT FK_USERS_ON_ROLE FOREIGN KEY (role_id) REFERENCES roles (id);
-
-INSERT INTO users(keycloakUserId, name, password, companies_id, role_id)
-VALUES ('c8560cb3-c774-4216-b271-caf9e40428b7', 'admin', '$2a$12$AMdnoL4ygOfgavUCp9h3tO9/BKH7NZgMZxjwhTPg5yrL1lCGSXTCy', 1, 1);

@@ -1,57 +1,76 @@
 package com.modsen.cardissuer.configuration;
 
-import org.keycloak.adapters.springsecurity.KeycloakConfiguration;
-import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
-import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.nimbusds.jose.shaded.json.JSONArray;
+import com.nimbusds.jose.shaded.json.JSONObject;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper;
-import org.springframework.security.core.session.SessionRegistryImpl;
-import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
-import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.web.SecurityFilterChain;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
-@KeycloakConfiguration
-public class WebSecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter {
+@Configuration
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class WebSecurityConfiguration {
 
     public static final String LOGIN_ENDPOINT = "/api/v1/auth/login";
-    public static final String ADMIN_ENDPOINT = "/api/v1/admin/**";
-    public static final String MODERATOR_ENDPOINT = "/api/v1/moderator/**";
-    public static final String ACCOUNTANT_ENDPOINT = "/api/v1/accountant/**";
-    public static final String USER_ENDPOINT = "/api/v1/user/**";
 
-    @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) {
-        KeycloakAuthenticationProvider keycloakAuthenticationProvider =
-                keycloakAuthenticationProvider();
-        keycloakAuthenticationProvider.setGrantedAuthoritiesMapper(new SimpleAuthorityMapper());
-        auth.authenticationProvider(keycloakAuthenticationProvider);
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeRequests(authorizeRequests -> authorizeRequests
+                        .antMatchers(LOGIN_ENDPOINT).permitAll()
+                        .anyRequest().authenticated())
+                .oauth2ResourceServer(resourceServerConfigurer -> resourceServerConfigurer
+                        .jwt(jwtConfigurer -> jwtConfigurer
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                );
+
+        return http.build();
+    }
+
+
+    @Bean
+    public Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter() {
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter());
+        return jwtAuthenticationConverter;
     }
 
     @Bean
-    @Override
-    public SessionAuthenticationStrategy sessionAuthenticationStrategy() {
-        return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
-    }
+    public Converter<Jwt, Collection<GrantedAuthority>> jwtGrantedAuthoritiesConverter() {
+        JwtGrantedAuthoritiesConverter delegate = new JwtGrantedAuthoritiesConverter();
 
-    @Override
-    public void configure(HttpSecurity http) throws Exception {
-        super.configure(http);
-        http
-                .csrf().disable()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authorizeRequests()
-                .antMatchers(LOGIN_ENDPOINT).permitAll()
-                .antMatchers(ADMIN_ENDPOINT).hasAuthority("admin permission")
-                .antMatchers(MODERATOR_ENDPOINT).hasAuthority("moderator permission")
-                .antMatchers(ACCOUNTANT_ENDPOINT).hasAuthority("accountant permission")
-                .antMatchers(USER_ENDPOINT).hasAuthority("user permission")
-                .anyRequest()
-                .authenticated();
-    }
+        return jwt -> {
+            Collection<GrantedAuthority> grantedAuthorities = delegate.convert(jwt);
 
+            if (jwt.getClaim("realm_access") == null) {
+                return grantedAuthorities;
+            }
+
+            final JSONObject realmAccess = jwt.getClaim("realm_access");
+
+            if (realmAccess.get("roles") == null) {
+                return grantedAuthorities;
+            }
+
+            final JSONArray roles = (JSONArray) realmAccess.get("roles");
+            final List<SimpleGrantedAuthority> keycloakAuthorities = roles.stream().map(role ->
+                    new SimpleGrantedAuthority("ROLE_" + role)).collect(Collectors.toList());
+            grantedAuthorities.addAll(keycloakAuthorities);
+
+            return grantedAuthorities;
+        };
+    }
 }
