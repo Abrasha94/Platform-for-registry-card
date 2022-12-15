@@ -1,4 +1,4 @@
-package com.modsen.cardissuer.configuration;
+package com.modsen.cardissuer.kafka;
 
 import com.modsen.cardissuer.model.Balance;
 import org.apache.kafka.clients.consumer.ConsumerConfig;

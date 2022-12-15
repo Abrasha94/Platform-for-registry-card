@@ -1,6 +1,7 @@
 package com.modsen.cardissuer.service;
 
 import com.modsen.cardissuer.client.BalanceClient;
+import com.modsen.cardissuer.kafka.KafkaProducer;
 import com.modsen.cardissuer.dto.request.CardOrderDto;
 import com.modsen.cardissuer.dto.response.CardResponseDto;
 import com.modsen.cardissuer.dto.request.ChangeUsersInCardDto;
@@ -25,14 +26,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,19 +44,19 @@ public class CardService {
     private final UsersCardsRepository usersCardsRepository;
     private final UsersCardsService usersCardsService;
     private final GenerateCardNumber generateCardNumber;
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaProducer kafkaProducer;
     private final BalanceClient balanceClient;
 
     @Autowired
     public CardService(CardRepository cardRepository, UserRepository userRepository,
                        GenerateCardNumber generateCardNumber, UsersCardsRepository usersCardsRepository,
-                       UsersCardsService usersCardsService, KafkaTemplate<String, String> kafkaTemplate, BalanceClient balanceClient) {
+                       UsersCardsService usersCardsService, KafkaProducer kafkaProducer, BalanceClient balanceClient) {
         this.cardRepository = cardRepository;
         this.userRepository = userRepository;
         this.generateCardNumber = generateCardNumber;
         this.usersCardsRepository = usersCardsRepository;
         this.usersCardsService = usersCardsService;
-        this.kafkaTemplate = kafkaTemplate;
+        this.kafkaProducer = kafkaProducer;
         this.balanceClient = balanceClient;
     }
 
@@ -179,17 +177,6 @@ public class CardService {
     }
 
     public void sendMsg(String topic, String msg) {
-        kafkaTemplate.send(topic, msg);
-    }
-
-    @KafkaListener(topics = "balanceResponse")
-    public void msgListener(Balance balance) {
-        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        final Optional<Card> optionalCard = cardRepository.findById(balance.getCardNumber());
-        if (optionalCard.isPresent()) {
-            final Card card = optionalCard.get();
-            card.setBalance(balance.getBalance());
-            cardRepository.save(card);
-        }
+        kafkaProducer.send(topic, msg);
     }
 }

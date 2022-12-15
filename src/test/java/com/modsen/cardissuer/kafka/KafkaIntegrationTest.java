@@ -1,16 +1,15 @@
 package com.modsen.cardissuer.kafka;
 
+import com.modsen.cardissuer.model.Card;
+import com.modsen.cardissuer.model.Company;
+import com.modsen.cardissuer.model.PaySystem;
+import com.modsen.cardissuer.model.Status;
+import com.modsen.cardissuer.model.Type;
+import com.modsen.cardissuer.repository.CardRepository;
+import com.modsen.cardissuer.repository.CompanyRepository;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicListing;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,12 +19,16 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import java.time.Duration;
-import java.util.*;
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,17 +42,28 @@ public class KafkaIntegrationTest {
     private static final KafkaContainer KAFKA_CONTAINER =
             new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:latest"));
 
+    @Container
+    private static final PostgreSQLContainer POSTGRE_SQL_CONTAINER =
+            new PostgreSQLContainer(DockerImageName.parse("postgres:14")).withUsername("postgres").withPassword("root");
+
     @Autowired
     private KafkaAdmin kafkaAdmin;
 
-    List<NewTopic> topics = List.of(
-            TopicBuilder.name("balanceRequest").build(),
-            TopicBuilder.name("balanceResponse").build()
-    );
+    @Autowired
+    private KafkaProducer kafkaProducer;
+
+    @Autowired
+    private CardRepository cardRepository;
+
+    @Autowired
+    private CompanyRepository companyRepository;
+
+    List<NewTopic> topics = Collections.singletonList(TopicBuilder.name("balanceResponse").build());
 
     @DynamicPropertySource
     public static void properties(DynamicPropertyRegistry registry) {
         registry.add("spring.kafka.bootstrap-servers", KAFKA_CONTAINER::getBootstrapServers);
+        registry.add("spring.datasource.url", POSTGRE_SQL_CONTAINER::getJdbcUrl);
     }
 
     @Test
@@ -59,43 +73,33 @@ public class KafkaIntegrationTest {
         final Collection<TopicListing> topicListings = adminClient.listTopics().listings().get();
 
         assertThat(topicListings).isNotNull();
-        assertThat(topicListings.size()).isEqualTo(2);
+        assertThat(topicListings.size()).isEqualTo(1);
     }
 
     @Test
-    public void whenSendingWithProducer_thenMessageReceived() throws InterruptedException, ExecutionException {
-        AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties());
-        adminClient.createTopics(topics);
-        final KafkaConsumer<String, String> kafkaConsumer = createKafkaConsumer();
-        final KafkaProducer<String, String> kafkaProducer = createKafkaProducer();
+    public void whenSendingBalance_thenUpdatedBalanceOnRightCard() throws InterruptedException, ExecutionException {
+        createCard();
+        String data = "{\"balance\":12.34,\"cardNumber\":22}";
 
-        kafkaConsumer.subscribe(Collections.singletonList("balanceResponse"));
+        kafkaProducer.send("balanceResponse", data);
+        Thread.sleep(5000);
+        final Optional<Card> byId = cardRepository.findById(22L);
 
-        String data = "222222222222222222222";
-
-        kafkaProducer.send(new ProducerRecord<>("balanceResponse", data)).get();
-
-        final ConsumerRecords<String, String> poll = kafkaConsumer.poll(Duration.ofMillis(10000));
-        assertThat(poll.count()).isEqualTo(1);
+        assertThat(byId).isPresent();
+        assertThat(byId.get().getBalance()).isEqualTo(BigDecimal.valueOf(12.34));
     }
 
-    private KafkaProducer<String, String> createKafkaProducer() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_CONTAINER.getBootstrapServers());
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-
-        return new KafkaProducer<>(props);
-    }
-
-    private KafkaConsumer<String, String> createKafkaConsumer() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_CONTAINER.getBootstrapServers());
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "app.1");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
-        return new KafkaConsumer<>(props);
+    private void createCard() {
+        final Company company = new Company();
+        company.setStatus(Status.ACTIVE);
+        company.setName("test");
+        final Company savedCompany = companyRepository.save(company);
+        final Card card = new Card();
+        card.setNumber(22L);
+        card.setStatus("test");
+        card.setType(Type.PERSONAL);
+        card.setPaySystem(PaySystem.VISA);
+        card.setCompany(savedCompany);
+        cardRepository.save(card);
     }
 }
