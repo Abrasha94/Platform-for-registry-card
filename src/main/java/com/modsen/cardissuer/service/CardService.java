@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -150,7 +151,7 @@ public class CardService {
 
         for (Card card : cards) {
             final Long cardNumber = card.getNumber();
-            sendMsg(cardNumber.toString());
+            sendMsg("balanceRequest", cardNumber.toString());
             card.setBalance(getBalanceFromCard(cardNumber).getBalance());
         }
 
@@ -177,12 +178,13 @@ public class CardService {
         return new Balance(card.getBalance(), cardNumber);
     }
 
-    public void sendMsg(String msg) {
-        kafkaTemplate.send("balanceRequest", msg);
+    public void sendMsg(String topic, String msg) {
+        kafkaTemplate.send(topic, msg);
     }
 
-    //    @KafkaListener(topics = "balanceResponse")
+    @KafkaListener(topics = "balanceResponse")
     public void msgListener(Balance balance) {
+        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
         final Optional<Card> optionalCard = cardRepository.findById(balance.getCardNumber());
         if (optionalCard.isPresent()) {
             final Card card = optionalCard.get();
