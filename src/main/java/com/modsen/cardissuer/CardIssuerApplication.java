@@ -9,7 +9,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableFeignClients("com.modsen.cardissuer.client")
+@EnableFeignClients
 @EnableHystrix
 @EnableCaching
 public class CardIssuerApplication {
