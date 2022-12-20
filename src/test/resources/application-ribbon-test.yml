@@ -4,10 +4,11 @@ spring:
       client:
         simple:
           instances:
-            company-api[0]:
+            BalanceFromCard[0]:
               uri: http://localhost:${wiremock.server.port}
-            company-api[1]:
+            BalanceFromCard[1]:
               uri: http://localhost:9002
+
     loadbalancer:
       retry:
         retryableStatusCodes: 404

@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient("BalanceFromCard")
+@FeignClient(value = "BalanceFromCard", decode404 = true)
 //@FeignClient(name = "BalanceFromCard", url = "BalanceFromCard")
 //@RibbonClient(name = "BalanceFromCard", configuration = RibbonConfiguration.class)
 public interface BalanceClient {
