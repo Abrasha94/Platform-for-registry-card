@@ -2,7 +2,6 @@ package com.modsen.cardissuer.client;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.StreamUtils;
@@ -11,7 +10,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 public class BalanceMocks {
-    public static void setupMockBalanceResponse(WireMockExtension mockService) throws IOException {
+    public static void setupMockBalanceResponse(WireMockServer mockService) throws IOException {
         mockService.stubFor(WireMock.get(WireMock.urlEqualTo("/api/v1/balance/123"))
                 .willReturn(WireMock.aResponse()
                         .withStatus(HttpStatus.OK.value())

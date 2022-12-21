@@ -1,31 +1,30 @@
 package com.modsen.cardissuer.client;
 
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.moreThan;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 
 @SpringBootTest
-@ActiveProfiles("ribbon-test")
-@AutoConfigureWireMock(port = 0)
-@TestPropertySource("classpath:application-ribbon-test.yml")
+@ActiveProfiles("test")
+@EnableConfigurationProperties
+@ExtendWith(SpringExtension.class)
 class LoadBalancerBalanceClientIntegrationTest {
 
-    @RegisterExtension
-    protected static WireMockExtension BalanceService = WireMockExtension.newInstance()
-            .options(WireMockConfiguration.wireMockConfig().port(9002))
-            .build();
+    private final WireMockServer balanceService = new WireMockServer(9002);
+    private final WireMockServer secondBalanceService = new WireMockServer(9003);
 
     @Autowired
     private BalanceClient balanceClient;
@@ -33,23 +32,27 @@ class LoadBalancerBalanceClientIntegrationTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        BalanceMocks.setupMockBalanceResponse(BalanceService);
+        balanceService.start();
+        secondBalanceService.start();
+        BalanceMocks.setupMockBalanceResponse(balanceService);
+        BalanceMocks.setupMockBalanceResponse(secondBalanceService);
     }
 
     @AfterEach
     void tearDown() {
+        balanceService.stop();
+        secondBalanceService.stop();
     }
 
     @Test
-    void getBalance() {
-
+    void whenUsingBalanceClient_thenUsedTwoInstances() {
         for (int i = 0; i < 10; i++) {
             balanceClient.getBalance(123L);
         }
 
-        BalanceService.verify(
+        balanceService.verify(
                 moreThan(0), getRequestedFor(urlEqualTo("/api/v1/balance/123")));
-//        secondMockBalanceService.verify(
-//                moreThan(0), getRequestedFor(urlEqualTo("/123")));
+        secondBalanceService.verify(
+                moreThan(0), getRequestedFor(urlEqualTo("/api/v1/balance/123")));
     }
 }
