@@ -1,71 +1,78 @@
 package com.modsen.cardissuer.repository;
 
-import com.modsen.cardissuer.model.*;
+import com.modsen.cardissuer.model.Card;
+import com.modsen.cardissuer.model.Status;
+import com.modsen.cardissuer.model.User;
+import com.modsen.cardissuer.model.UsersCards;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class UsersCardsRepositoryTest {
 
-    @Autowired
-    TestEntityManager entityManager;
+class UsersCardsRepositoryTest extends AbstractRepositoryTest{
 
     @Autowired
     UsersCardsRepository usersCardsRepository;
 
-    UsersCards usersCards = new UsersCards();
-    User user = new User();
-    Card card = new Card();
+    @Autowired
+    UserRepository userRepository;
 
+    UsersCards usersCards = new UsersCards();
 
     @BeforeEach
     void setUp() {
-        user.setId(1L);
-        card.setNumber(123L);
-        card.setStatus("test status");
-        card.setType(Type.PERSONAL);
-        card.setPaySystem(PaySystem.MASTERCARD);
-        usersCards.setUser(user);
-        usersCards.setCard(card);
+        usersCardsRepository.save(usersCards);
     }
 
     @Test
-    void should_create_users_card() {
-        final UsersCards savedUsersCard = usersCardsRepository.save(usersCards);
-        assertEquals(card, savedUsersCard.getCard());
-        assertEquals(user, savedUsersCard.getUser());
+    void whenSaveUsersCards_thenReturnRightUsersCards() {
+        UsersCards usersCardsNew = new UsersCards();
+
+        final UsersCards saveUsersCards = usersCardsRepository.save(usersCardsNew);
+
+        assertThat(saveUsersCards).isEqualTo(usersCardsNew);
     }
 
     @Test
-    void should_find_users_card_by_id() {
-        final UsersCards savedUsersCard = entityManager.persist(usersCards);
-        final UsersCards foundedUsersCard = usersCardsRepository.findById(savedUsersCard.getId()).get();
-        assertEquals(savedUsersCard, foundedUsersCard);
+    void whenFindUsersCardsById_thenReturnUsersCards() {
+        final List<UsersCards> all = usersCardsRepository.findAll();
+
+        assertThat(all).isNotEmpty();
+
+        final Optional<UsersCards> byId = usersCardsRepository.findById(all.get(0).getId());
+
+        assertThat(byId).isPresent();
+        assertThat(byId.get()).isEqualTo(usersCards);
     }
 
     @Test
-    void should_find_users_card_by_user_id() {
-        entityManager.persist(card);
-        final UsersCards savedUsersCard = entityManager.persist(usersCards);
-        final List<UsersCards> cardsList = usersCardsRepository.findByUserId(user.getId()).get();
-        assertEquals(savedUsersCard, cardsList.get(0));
+    void whenUpdateUsersCardsById_thenUsersCardsUpdated() {
+        final List<UsersCards> all = usersCardsRepository.findAll();
+
+        assertThat(all).isNotEmpty();
+
+        final UsersCards changedUsersCards = usersCardsRepository.findById(all.get(0).getId()).get();
+        changedUsersCards.setId(Long.MAX_VALUE);
+        final UsersCards saveUsersCards = usersCardsRepository.save(changedUsersCards);
+
+        assertThat(saveUsersCards.getId()).isEqualTo(Long.MAX_VALUE);
     }
 
     @Test
-    void should_delete_users_card_by_id() {
-        final UsersCards savedUsersCard = entityManager.persist(usersCards);
-        usersCardsRepository.deleteById(savedUsersCard.getId());
-        final Optional<UsersCards> usersCardById = usersCardsRepository.findById(savedUsersCard.getId());
-        assertTrue(usersCardById.isEmpty());
+    void whenDeleteById_thenUsersCardsDeleted() {
+        final List<UsersCards> all = usersCardsRepository.findAll();
+
+        assertThat(all).isNotEmpty();
+
+        usersCardsRepository.deleteById(all.get(0).getId());
+
+        final Optional<UsersCards> byId = usersCardsRepository.findById(all.get(0).getId());
+
+        assertThat(byId).isEmpty();
     }
 }

@@ -11,6 +11,9 @@ import org.springframework.validation.Validator;
 @Component
 public class UserValidator implements Validator {
 
+    public static final int MIN_NAME_SIZE = 8;
+    public static final int MAX_SIZE = 32;
+    public static final int MIN_PASS_SIZE = 6;
     private final UserService userService;
 
     @Autowired
@@ -27,7 +30,7 @@ public class UserValidator implements Validator {
     public void validate(Object target, Errors errors) {
         final User user = (User) target;
         ValidationUtils.rejectIfEmptyOrWhitespace(errors, "name", "required");
-        if (user.getName().length() < 8 || user.getName().length() > 32) {
+        if (user.getName().length() < MIN_NAME_SIZE || user.getName().length() > MAX_SIZE) {
             errors.rejectValue("name", "size.userForm.name");
         }
 
@@ -36,7 +39,7 @@ public class UserValidator implements Validator {
         }
 
         ValidationUtils.rejectIfEmptyOrWhitespace(errors, "password", "required");
-        if (user.getPassword().length() < 6 || user.getPassword().length() > 32) {
+        if (user.getPassword().length() < MIN_PASS_SIZE || user.getPassword().length() > MAX_SIZE) {
             errors.rejectValue("password", "size.userForm.password");
         }
         if (user.getConfirmPassword().equals(user.getPassword())) {

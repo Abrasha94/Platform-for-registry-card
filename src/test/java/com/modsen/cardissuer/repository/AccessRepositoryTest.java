@@ -1,63 +1,81 @@
 package com.modsen.cardissuer.repository;
 
 import com.modsen.cardissuer.model.Access;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class AccessRepositoryTest {
+
+class AccessRepositoryTest extends AbstractRepositoryTest {
 
     @Autowired
     AccessRepository accessRepository;
 
-    @Test
-    void should_create_access() {
-        Access access = new Access();
-        access.setPermission("test permission");
-        final Access savedAccess = accessRepository.save(access);
-        assertEquals(access.getPermission(), savedAccess.getPermission());
+    Access access = new Access();
+
+    @BeforeEach
+    void setUp() {
+        access.setPermission("test");
+        accessRepository.save(access);
     }
 
     @Test
-    void should_find_access_by_permission() {
-        Access access = accessRepository.findByPermission("admin permission");
-        assertEquals(1L, access.getId());
+    void whenSaveAccess_thenReturnRightAccess() {
+        Access accessNew = new Access();
+        accessNew.setPermission("test permission");
+
+        final Access savedAccess = accessRepository.save(accessNew);
+
+        assertThat(savedAccess.getPermission()).isEqualTo(accessNew.getPermission());
     }
 
     @Test
-    void should_find_access_by_id() {
-        Access access = accessRepository.findById(1L).get();
-        assertEquals("admin permission", access.getPermission());
+    void whenFindAccessByPermission_thenReturnAccess() {
+        Access foundedAccess = accessRepository.findByPermission("test");
+
+        assertThat(foundedAccess).isEqualTo(access);
     }
 
     @Test
-    void should_find_all_access() {
-        List<Access> accessList = accessRepository.findAll();
-        assertEquals(4, accessList.size());
-    }
+    void whenFindAccessById_thenReturnAccess() {
+        final List<Access> all = accessRepository.findAll();
 
+        assertThat(all).isNotEmpty();
 
-    @Test
-    void should_update_access_by_id() {
-        final Access changedAccess = accessRepository.findById(1L).get();
-        changedAccess.setPermission("test permission");
-        accessRepository.save(changedAccess);
-        final Access checkAccess = accessRepository.findById(1L).get();
-        assertEquals("test permission", checkAccess.getPermission());
+        final Optional<Access> byId = accessRepository.findById(all.get(0).getId());
+
+        assertThat(byId).isPresent();
+        assertThat(byId.get()).isEqualTo(access);
     }
 
     @Test
-    void should_delete_access_by_id() {
-        accessRepository.deleteById(1L);
-        final Optional<Access> byId = accessRepository.findById(1L);
-        assertTrue(byId.isEmpty());
+    void whenUpdateAccessById_thenAccessUpdated() {
+        final List<Access> all = accessRepository.findAll();
+
+        assertThat(all).isNotEmpty();
+
+        final Access changedAccess = accessRepository.findById(all.get(0).getId()).get();
+        changedAccess.setPermission("test test");
+        final Access saveAccess = accessRepository.save(changedAccess);
+
+        assertThat(saveAccess.getPermission()).isEqualTo(changedAccess.getPermission());
+    }
+
+    @Test
+    void whenDeleteById_thenAccessDeleted() {
+        final List<Access> all = accessRepository.findAll();
+
+        assertThat(all).isNotEmpty();
+
+        accessRepository.deleteById(all.get(0).getId());
+
+        final Optional<Access> byId = accessRepository.findById(all.get(0).getId());
+
+        assertThat(byId).isEmpty();
     }
 }
