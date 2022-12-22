@@ -23,6 +23,15 @@ services:
     networks:
       - backend
 
+  cache:
+    container_name: redis
+    image: redis
+    ports:
+      - "6379:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+
+
   pgadmin:
     container_name: pgadmin
     image: dpage/pgadmin4:5
