@@ -1,11 +1,21 @@
 package com.modsen.cardissuer.model;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.Hibernate;
 
-import javax.persistence.*;
-import java.util.List;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Table(name = "access")
@@ -20,11 +30,11 @@ public class Access {
     private Long id;
 
     @Column(nullable = false)
-    private String name;
+    private String permission;
 
-    @OneToMany(mappedBy = "access")
+    @ManyToMany(mappedBy = "accessSet", fetch = FetchType.LAZY)
     @ToString.Exclude
-    private List<User> users;
+    private Set<User> users;
 
     @Override
     public boolean equals(Object o) {

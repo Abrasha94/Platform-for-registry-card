@@ -22,7 +22,7 @@ public class Role {
     @Column(length = 15, nullable = false)
     private String name;
 
-    @OneToMany(mappedBy = "role")
+    @OneToMany(mappedBy = "role", fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<User> users;
 

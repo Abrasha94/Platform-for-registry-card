@@ -1,10 +1,14 @@
 package com.modsen.cardissuer.model;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -21,22 +25,25 @@ public class Card {
     @Column(nullable = false, length = 20)
     private String status;
 
-    @Column(nullable = false, length = 10)
-    private String type;
-
     @Column(nullable = false)
-    private Timestamp expirationDate;
+    @Enumerated(EnumType.STRING)
+    private Type type;
 
-    @Column(nullable = false, length = 3)
-    private Integer CVVCode;
+    @Column(name = "pay_system", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private PaySystem paySystem;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @OneToMany(mappedBy = "card")
+    @ToString.Exclude
+    private List<UsersCards> usersCards;
 
-    @ManyToOne
-    @JoinColumn(name = "company_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id", nullable = false)
+    @ToString.Exclude
     private Company company;
+
+    @Column(name = "balance")
+    private BigDecimal balance;
 
     @Override
     public boolean equals(Object o) {

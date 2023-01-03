@@ -1,9 +1,16 @@
 package com.modsen.cardissuer.model;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.Hibernate;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import java.util.List;
 import java.util.Objects;
 
@@ -13,20 +20,16 @@ import java.util.Objects;
 @Setter
 @ToString
 @RequiredArgsConstructor
-public class Company {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Company extends BaseEntity {
 
     @Column(nullable = false, unique = true)
     private String name;
 
-    @OneToMany(mappedBy = "company")
+    @OneToMany(mappedBy = "company", fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<User> users;
 
-    @OneToMany(mappedBy = "company")
+    @OneToMany(mappedBy = "company", fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<Card> cards;
 
@@ -35,7 +38,7 @@ public class Company {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
         Company company = (Company) o;
-        return id != null && Objects.equals(id, company.id);
+        return getId() != null && Objects.equals(getId(), company.getId());
     }
 
     @Override
