@@ -1,7 +1,6 @@
 package com.modsen.cardissuer.rest;
 
 import com.modsen.cardissuer.dto.response.CardResponseDto;
-import com.modsen.cardissuer.exception.CardNotFoundException;
 import com.modsen.cardissuer.service.CardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,11 +25,8 @@ public class UserRestControllerV1 {
 
     @GetMapping("cards")
     public ResponseEntity<List<CardResponseDto>> getAllCard(HttpServletRequest request) {
-        try {
-            final List<CardResponseDto> cards = cardService.findCardsByUser(request);
-            return new ResponseEntity<>(cards, HttpStatus.OK);
-        } catch (CardNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
+        final List<CardResponseDto> cards = cardService.findCardsByUser(request);
+
+        return new ResponseEntity<>(cards, HttpStatus.OK);
     }
 }

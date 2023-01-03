@@ -2,13 +2,11 @@ package com.modsen.cardissuer.service;
 
 import com.modsen.cardissuer.dto.request.AccountantRegisterUserDto;
 import com.modsen.cardissuer.dto.request.AdminRegisterUserDto;
-import com.modsen.cardissuer.dto.request.ChangePasswordDto;
 import com.modsen.cardissuer.dto.request.ChangeUserPermissionDto;
 import com.modsen.cardissuer.dto.request.ChangeUserStatusDto;
 import com.modsen.cardissuer.dto.response.UserResponseDto;
 import com.modsen.cardissuer.exception.CompanyNotFoundException;
 import com.modsen.cardissuer.exception.RoleNotFoundException;
-import com.modsen.cardissuer.exception.WrongPasswordException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Access;
 import com.modsen.cardissuer.model.Status;
@@ -17,6 +15,9 @@ import com.modsen.cardissuer.repository.AccessRepository;
 import com.modsen.cardissuer.repository.CompanyRepository;
 import com.modsen.cardissuer.repository.RoleRepository;
 import com.modsen.cardissuer.repository.UserRepository;
+import com.modsen.cardissuer.rest.AccountantRestControllerV1;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,11 @@ import java.util.stream.Collectors;
 
 @Service
 public class UserService {
+
+    public static final long ID = 4L;
+    public static final long ACCOUNTANT_ID = 3L;
+
+    private Logger logger = LoggerFactory.getLogger(AccountantRestControllerV1.class);
 
     public static final String HEADER_KEYCLOAKUSERID = "keycloakUserID";
     private final UserRepository userRepository;
@@ -76,9 +82,9 @@ public class UserService {
         user.setPassword(encoder.encode(dto.getPassword()));
         user.setStatus(Status.ACTIVE);
         user.setCompany(reqUser.getCompany());
-        user.setRole(roleRepository.findById(4L).orElseThrow(() -> new RoleNotFoundException("Role not found!")));
+        user.setRole(roleRepository.findById(ID).orElseThrow(() -> new RoleNotFoundException("Role not found!")));
         user.setAccessSet(Collections.singleton(accessRepository
-                .findById(4L)
+                .findById(ID)
                 .orElseThrow(() -> new RoleNotFoundException("Role not found!"))));
 
         return userRepository.save(user);
@@ -86,25 +92,22 @@ public class UserService {
 
     public User changeStatus(Long id, ChangeUserStatusDto dto) {
 
-        final User user = findById(id);
+        final User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found!"));
         user.setStatus(dto.getStatus());
 
-        userRepository.updateStatus(dto.getStatus(), id);
-
-        return user;
+        return userRepository.save(user);
     }
 
     public User changePermission(Long id, ChangeUserPermissionDto dto) {
 
-        final User user = findById(id);
+        final User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found!"));
 
         final Set<Access> accessSet = dto.getAccessId().stream()
                 .map(id1 -> accessRepository.findById(id1).orElseThrow(() -> new RoleNotFoundException("Role not found!")))
                 .collect(Collectors.toSet());
         user.setAccessSet(accessSet);
-        userRepository.updateAccess(accessSet, id);
 
-        return user;
+        return userRepository.save(user);
     }
 
     public User findByName(String name) {
@@ -120,26 +123,8 @@ public class UserService {
     public List<UserResponseDto> findAllAccountants() {
 
         final List<User> accountants = userRepository.findByRole(
-                roleRepository.findById(3L).orElseThrow(() -> new RoleNotFoundException("Role not found!")));
+                roleRepository.findById(ACCOUNTANT_ID).orElseThrow(() -> new RoleNotFoundException("Role not found!")));
 
         return accountants.stream().map(UserResponseDto::fromUser).collect(Collectors.toList());
     }
-
-    public void changePassword(ChangePasswordDto dto, HttpServletRequest request) {
-
-        final User user = userRepository
-                .findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID))
-                .orElseThrow(() -> new UserNotFoundException("User not found!"));
-
-        if (!encoder.matches(dto.getOldPass(), user.getPassword())) {
-            throw new WrongPasswordException("Wrong old password!");
-        }
-
-        if (encoder.matches(dto.getNewPass(), user.getPassword())) {
-            throw new WrongPasswordException("Old and new password don't be the same!");
-        }
-
-        userRepository.updatePassword(encoder.encode(dto.getNewPass()), user.getId());
-    }
-
 }

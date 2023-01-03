@@ -2,49 +2,76 @@ package com.modsen.cardissuer.repository;
 
 import com.modsen.cardissuer.model.Company;
 import com.modsen.cardissuer.model.Status;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
+import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class CompanyRepositoryTest {
+
+class CompanyRepositoryTest extends AbstractRepositoryTest {
 
     @Autowired
     CompanyRepository companyRepository;
 
-    @Test
-    void should_create_company() {
-        Company company = new Company();
+    Company company = new Company();
+
+    @BeforeEach
+    void setUp() {
+        company.setName("test");
         company.setStatus(Status.ACTIVE);
-        company.setName("Test company");
-        final Company savedCompany = companyRepository.save(company);
-        assertEquals(company, savedCompany);
+        companyRepository.save(company);
     }
 
     @Test
-    void should_find_company_by_id() {
-        final Optional<Company> companyById = companyRepository.findById(1L);
-        assertTrue(companyById.isPresent());
+    void whenSaveCompany_thenReturnRightCompany() {
+        Company companyNew = new Company();
+        companyNew.setName("test name");
+        companyNew.setStatus(Status.ACTIVE);
+
+        final Company saveCompany = companyRepository.save(companyNew);
+
+        assertThat(saveCompany.getName()).isEqualTo(companyNew.getName());
     }
 
     @Test
-    void should_update_company_status_by_id() {
-        companyRepository.updateStatus(Status.BANNED, 1L);
-        final Company company = companyRepository.findById(1L).get();
-        assertEquals(Status.BANNED, company.getStatus());
+    void whenFindCompanyById_thenReturnCompany() {
+        final List<Company> all = companyRepository.findAll();
+
+        assertThat(all).isNotEmpty();
+
+        final Optional<Company> byId = companyRepository.findById(all.get(0).getId());
+
+        assertThat(byId).isPresent();
+        assertThat(byId.get()).isEqualTo(company);
     }
 
     @Test
-    void should_delete_company_by_id() {
-        companyRepository.deleteById(1L);
-        final Optional<Company> companyById = companyRepository.findById(1L);
-        assertTrue(companyById.isEmpty());
+    void whenUpdateCompanyById_thenCompanyUpdated() {
+        final List<Company> all = companyRepository.findAll();
+
+        assertThat(all).isNotEmpty();
+
+        final Company changedCompany = companyRepository.findById(all.get(0).getId()).get();
+        changedCompany.setName("test test");
+        final Company saveCompany = companyRepository.save(changedCompany);
+
+        assertThat(saveCompany.getName()).isEqualTo(changedCompany.getName());
+    }
+
+    @Test
+    void whenDeleteById_thenCompanyDeleted() {
+        final List<Company> all = companyRepository.findAll();
+
+        assertThat(all).isNotEmpty();
+
+        companyRepository.deleteById(all.get(0).getId());
+
+        final Optional<Company> byId = companyRepository.findById(all.get(0).getId());
+
+        assertThat(byId).isEmpty();
     }
 }

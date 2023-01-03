@@ -13,6 +13,9 @@ public class GenerateCardNumber {
 
     protected static final String[] VISA_PREFIX_LIST = new String[]{"4539", "4556", "4916", "4532", "4929",
             "40240071", "4485", "4716", "4"};
+    public static final int BOUND = 10;
+    public static final int INT = 9;
+    public static final int LENGTH = 16;
 
     private Random random = new Random(System.currentTimeMillis());
 
@@ -23,7 +26,7 @@ public class GenerateCardNumber {
 
         StringBuilder builder = new StringBuilder(prefix);
         for (int i = 0; i < randomNumberLength; i++) {
-            int digit = this.random.nextInt(10);
+            int digit = this.random.nextInt(BOUND);
             builder.append(digit);
         }
 
@@ -42,22 +45,22 @@ public class GenerateCardNumber {
 
             if ((i % 2) == 0) {
                 digit = digit * 2;
-                if (digit > 9) {
-                    digit = (digit / 10) + (digit % 10);
+                if (digit > INT) {
+                    digit = (digit / BOUND) + (digit % BOUND);
                 }
             }
             sum += digit;
         }
 
-        int mod = sum % 10;
-        return ((mod == 0) ? 0 : 10 - mod);
+        int mod = sum % BOUND;
+        return ((mod == 0) ? 0 : BOUND - mod);
     }
 
     public Long generateMasterCard() {
-        return Long.valueOf(generate(MASTERCARD_PREFIX_LIST, 16));
+        return Long.valueOf(generate(MASTERCARD_PREFIX_LIST, LENGTH));
     }
 
     public Long generateVisa() {
-        return Long.valueOf(generate(VISA_PREFIX_LIST, 16));
+        return Long.valueOf(generate(VISA_PREFIX_LIST, LENGTH));
     }
 }
