@@ -2,6 +2,7 @@ package com.modsen.cardissuer.model;
 
 import lombok.*;
 import org.hibernate.Hibernate;
+import org.springframework.stereotype.Indexed;
 
 import javax.persistence.*;
 import java.util.List;
@@ -15,6 +16,9 @@ import java.util.Set;
 @ToString
 @RequiredArgsConstructor
 public class User extends BaseEntity {
+
+    @Column(nullable = false, unique = true)
+    private String keycloakUserId;
 
     @Column(nullable = false, length = 55, unique = true)
     private String name;
