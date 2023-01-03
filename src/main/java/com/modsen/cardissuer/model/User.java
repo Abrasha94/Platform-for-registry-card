@@ -2,6 +2,7 @@ package com.modsen.cardissuer.model;
 
 import lombok.*;
 import org.hibernate.Hibernate;
+import org.springframework.stereotype.Indexed;
 
 import javax.persistence.*;
 import java.util.List;
@@ -16,6 +17,9 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class User extends BaseEntity {
 
+    @Column(nullable = false, unique = true)
+    private String keycloakUserId;
+
     @Column(nullable = false, length = 55, unique = true)
     private String name;
 
@@ -29,18 +33,6 @@ public class User extends BaseEntity {
     @JoinColumn(name = "companies_id", nullable = false)
     @ToString.Exclude
     private Company company;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id", nullable = false)
-    @ToString.Exclude
-    private Role role;
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "user_permissions",
-    joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
-    inverseJoinColumns = {@JoinColumn(name = "access_id", referencedColumnName = "id")})
-    @ToString.Exclude
-    private Set<Access> accessSet;
 
     @OneToMany(mappedBy = "user")
     private List<UsersCards> usersCards;

@@ -18,6 +18,7 @@ import com.modsen.cardissuer.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -26,6 +27,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/admin/")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminRestControllerV1 {
 
     private final UserService userService;
@@ -94,21 +96,11 @@ public class AdminRestControllerV1 {
         return new ResponseEntity<>(companies, HttpStatus.OK);
     }
 
-    @GetMapping("users/accountants")
-    public ResponseEntity<List<UserResponseDto>> getAllAccountants() {
-        try {
-            final List<UserResponseDto> allAccountants = userService.findAllAccountants();
-            return new ResponseEntity<>(allAccountants, HttpStatus.OK);
-        } catch (UserNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-    }
-
     @GetMapping("{cardNumber}")
     public ResponseEntity<List<CardResponseDto>> sendMsg(@PathVariable(name = "cardNumber") String cardNumber, HttpServletRequest request) {
         cardService.sendMsg(cardNumber);
         try {
-            final List<CardResponseDto> cards = cardService.findCardsByUser(request);
+            final List<CardResponseDto> cards = cardService.findCardsByUser();
             return new ResponseEntity<>(cards, HttpStatus.OK);
         } catch (CardNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);

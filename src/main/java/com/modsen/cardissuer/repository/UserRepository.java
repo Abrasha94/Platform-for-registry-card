@@ -15,19 +15,14 @@ import java.util.Set;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    Optional<User> findByName(String name);
+    Optional<User> findByKeycloakUserId(String keycloakUserId);
 
-    List<User> findByRole(Role role);
+    Optional<User> findByName(String name);
 
     @Transactional
     @Modifying
     @Query("update User u set u.status = ?1 where u.id = ?2")
     void updateStatus(Status status, Long userId);
-
-    @Transactional
-    @Modifying
-    @Query("update User u set u.accessSet = ?1 where u.id = ?2")
-    void updateAccess(Set<Access> accessSet, Long userId);
 
     @Transactional
     @Modifying

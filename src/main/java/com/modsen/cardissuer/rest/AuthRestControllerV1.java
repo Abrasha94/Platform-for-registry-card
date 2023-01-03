@@ -3,29 +3,27 @@ package com.modsen.cardissuer.rest;
 import com.modsen.cardissuer.dto.request.AuthRequestDto;
 import com.modsen.cardissuer.dto.request.RefreshTokenRequest;
 import com.modsen.cardissuer.dto.response.AuthResponseDto;
-import com.modsen.cardissuer.dto.request.ChangePasswordDto;
 import com.modsen.cardissuer.dto.response.RefreshTokenResponse;
-import com.modsen.cardissuer.exception.RefreshTokenException;
-import com.modsen.cardissuer.exception.WrongPasswordException;
+import com.modsen.cardissuer.model.Authentication;
 import com.modsen.cardissuer.model.RefreshToken;
-import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.security.jwt.JwtTokenProvider;
 import com.modsen.cardissuer.service.RefreshTokenService;
 import com.modsen.cardissuer.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 
@@ -33,15 +31,29 @@ import javax.validation.Valid;
 @RequestMapping("/api/v1/auth/")
 public class AuthRestControllerV1 {
 
-    private final AuthenticationManager authenticationManager;
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
+    public static final String CLIENT_ID = "client_id";
+    public static final String GRANT_TYPE = "grant_type";
+    public static final String CLIENT_SECRET = "client_secret";
+    public static final String AUTH_URL = "http://127.0.0.1:8080/realms/my-realm/protocol/openid-connect/token";
+
+
+    @Value("${keycloak.credentials.secret}")
+    private String secret;
+    @Value("${keycloak.resource}")
+    private String clientId;
+
+    private final RestTemplate restTemplate;
+
     private final JwtTokenProvider jwtTokenProvider;
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
 
     @Autowired
-    public AuthRestControllerV1(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider,
+    public AuthRestControllerV1(RestTemplateBuilder builder, JwtTokenProvider jwtTokenProvider,
                                 UserService userService, RefreshTokenService refreshTokenService) {
-        this.authenticationManager = authenticationManager;
+        this.restTemplate = builder.build();
         this.jwtTokenProvider = jwtTokenProvider;
         this.userService = userService;
         this.refreshTokenService = refreshTokenService;
@@ -49,41 +61,40 @@ public class AuthRestControllerV1 {
 
     @PostMapping("login")
     public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody AuthRequestDto authRequestDto) {
-        try {
-            final String name = authRequestDto.getName();
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(name, authRequestDto.getPassword()));
-            User user = userService.findByName(name);
-            if (user == null) {
-                throw new UsernameNotFoundException("User with name " + name + " not found");
-            }
-            final String token = jwtTokenProvider.createToken(name, user.getAccessSet());
-            final RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
-            return new ResponseEntity<>(new AuthResponseDto(name, token, refreshToken.getToken()), HttpStatus.OK);
-        } catch (AuthenticationException e) {
-            throw new BadCredentialsException("Invalid name or password");
-        }
+
+        final HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        final MultiValueMap<String, String> variablesMap = new LinkedMultiValueMap<>();
+        variablesMap.set(USERNAME, authRequestDto.getName());
+        variablesMap.set(PASSWORD, authRequestDto.getPassword());
+        variablesMap.set(CLIENT_ID, clientId);
+        variablesMap.set(GRANT_TYPE, PASSWORD);
+        variablesMap.set(CLIENT_SECRET, secret);
+
+        final HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(variablesMap, httpHeaders);
+
+        final ResponseEntity<Authentication> response = restTemplate.postForEntity(AUTH_URL, request, Authentication.class);
+
+        return new ResponseEntity<>(new AuthResponseDto(authRequestDto.getName(),
+                response.getBody().getAccess_token(),
+                response.getBody().getRefresh_token()), response.getStatusCode());
     }
 
     @PostMapping("refreshtoken")
     public ResponseEntity<RefreshTokenResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
-        final String refreshToken = request.getRefreshToken();
-        return refreshTokenService.findByToken(refreshToken)
-                .map(refreshTokenService::verifyExpiration)
-                .map(RefreshToken::getUser)
-                .map(user -> {
-                    final String token = jwtTokenProvider.createToken(user.getName(), user.getAccessSet());
-                    return new ResponseEntity<>(new RefreshTokenResponse(token, refreshToken), HttpStatus.OK);
-                })
-                .orElseThrow(() -> new RefreshTokenException("Refresh token is wrong!"));
-    }
 
-    @PostMapping("change-password")
-    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordDto dto, HttpServletRequest request) {
-        try {
-            userService.changePassword(dto, request);
-            return new ResponseEntity<>("Password successfully changed!", HttpStatus.OK);
-        } catch (WrongPasswordException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+
+        return null;
     }
+//
+//    @PostMapping("change-password")
+//    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordDto dto, HttpServletRequest request) {
+//        try {
+//            userService.changePassword(dto, request);
+//            return new ResponseEntity<>("Password successfully changed!", HttpStatus.OK);
+//        } catch (WrongPasswordException e) {
+//            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+//        }
+//    }
 }

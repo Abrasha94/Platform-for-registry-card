@@ -15,6 +15,7 @@ import com.modsen.cardissuer.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,6 +30,7 @@ import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/v1/accountant/")
+@PreAuthorize("hasRole('ACCOUNTANT')")
 public class AccountantRestControllerV1 {
 
     private final CardService cardService;
@@ -41,9 +43,9 @@ public class AccountantRestControllerV1 {
     }
 
     @GetMapping("cards")
-    public ResponseEntity<List<CardResponseDto>> getAllCard(HttpServletRequest request) {
+    public ResponseEntity<List<CardResponseDto>> getAllCard() {
         try {
-            final List<CardResponseDto> cards = cardService.findCardsByCompany(request);
+            final List<CardResponseDto> cards = cardService.findCardsByCompany();
             return new ResponseEntity<>(cards, HttpStatus.OK);
         } catch (NoSuchElementException | CardNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -52,22 +54,11 @@ public class AccountantRestControllerV1 {
 
     @PostMapping("register/users")
     public ResponseEntity<UserResponseDto> registerUserInCompany(@RequestBody AccountantRegisterUserDto dto, HttpServletRequest request) {
-        final User user = userService.saveInCompany(dto, request);
+        final User user = userService.saveInCompany(dto);
         if (user == null) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(UserResponseDto.fromUser(user), HttpStatus.OK);
-    }
-
-    @PostMapping("users/{id}/permissions")
-    public ResponseEntity<UserResponseDto> changeUserPermission(@PathVariable(name = "id") Long id,
-                                                                @RequestBody ChangeUserPermissionDto dto) {
-        try {
-            final User user = userService.changePermission(id, dto);
-            return new ResponseEntity<>(UserResponseDto.fromUser(user), HttpStatus.OK);
-        } catch (UserNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
     }
 
     @PostMapping("cards/order")

@@ -21,20 +21,16 @@ class UserRepositoryTest {
     void should_create_user() {
         Company company = new Company();
         company.setId(1L);
-        Role role = new Role();
-        role.setId(1L);
         User user = new User();
         user.setName("test name");
         user.setPassword("test pass");
         user.setStatus(Status.ACTIVE);
         user.setCompany(company);
-        user.setRole(role);
         final User savedUser = userRepository.save(user);
         assertEquals("test name", savedUser.getName());
         assertEquals("test pass", savedUser.getPassword());
         assertEquals(Status.ACTIVE, savedUser.getStatus());
         assertEquals(company.getId(), savedUser.getCompany().getId());
-        assertEquals(role.getId(), savedUser.getRole().getId());
     }
 
     @Test
@@ -47,14 +43,6 @@ class UserRepositoryTest {
     void should_find_user_by_name() {
         final User user = userRepository.findByName("admin").get();
         assertEquals(1L, user.getId());
-    }
-
-    @Test
-    void should_find_user_by_role() {
-        Role role = new Role();
-        role.setId(1L);
-        final User user = userRepository.findByRole(role).get(0);
-        assertEquals("admin", user.getName());
     }
 
     @Test
