@@ -3,7 +3,7 @@ package com.modsen.cardissuer.service;
 import com.modsen.cardissuer.client.BalanceClient;
 import com.modsen.cardissuer.kafka.KafkaProducer;
 import com.modsen.cardissuer.dto.request.CardOrderDto;
-import com.modsen.cardissuer.dto.response.CardResponseDto;
+import com.modsen.cardissuer.dto.response.CardResponse;
 import com.modsen.cardissuer.dto.request.ChangeUsersInCardDto;
 import com.modsen.cardissuer.exception.CardNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
@@ -23,6 +23,7 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +39,8 @@ public class CardService {
 
     private Logger logger = LoggerFactory.getLogger(AccountantRestControllerV1.class);
 
+    @Value("${exception.user.not.found}")
+    private String userNotFound;
     public static final String HEADER_KEYCLOAKUSERID = "keycloakUserID";
     private final CardRepository cardRepository;
     private final UserRepository userRepository;
@@ -60,21 +63,21 @@ public class CardService {
         this.balanceClient = balanceClient;
     }
 
-    public List<CardResponseDto> findCardsByCompany(HttpServletRequest request) {
+    public List<CardResponse> findCardsByCompany(HttpServletRequest request) {
 
         final User user = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID))
-                .orElseThrow(() -> new UserNotFoundException("User not found!"));
+                .orElseThrow(() -> new UserNotFoundException(userNotFound));
 
         final List<Card> cardsByCompany = cardRepository.findByCompany(user.getCompany());
         if (cardsByCompany.isEmpty()) {
             throw new CardNotFoundException("Cards not found!");
         } else {
             final List<Card> cardsWithBalance = addBalanceToListOfCards(cardsByCompany);
-            return cardsWithBalance.stream().map(CardResponseDto::fromCard).collect(Collectors.toList());
+            return cardsWithBalance.stream().map(CardResponse::fromCard).collect(Collectors.toList());
         }
     }
 
-    public List<CardResponseDto> findCardsByUser(HttpServletRequest request) {
+    public List<CardResponse> findCardsByUser(HttpServletRequest request) {
 
         final User user = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID))
                 .orElseThrow(() -> new UserNotFoundException("User not found!"));
@@ -86,7 +89,7 @@ public class CardService {
         } else {
             final List<Card> cards = usersCardsList.stream().map(UsersCards::getCard).collect(Collectors.toList());
             final List<Card> cardsWithBalance = addBalanceToListOfCards(cards);
-            return cardsWithBalance.stream().map(CardResponseDto::fromCard).collect(Collectors.toList());
+            return cardsWithBalance.stream().map(CardResponse::fromCard).collect(Collectors.toList());
         }
     }
 

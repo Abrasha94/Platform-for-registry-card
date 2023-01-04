@@ -4,7 +4,7 @@ import com.modsen.cardissuer.dto.request.AccountantRegisterUserDto;
 import com.modsen.cardissuer.dto.request.AdminRegisterUserDto;
 import com.modsen.cardissuer.dto.request.ChangeUserPermissionDto;
 import com.modsen.cardissuer.dto.request.ChangeUserStatusDto;
-import com.modsen.cardissuer.dto.response.UserResponseDto;
+import com.modsen.cardissuer.dto.response.UserResponse;
 import com.modsen.cardissuer.exception.CompanyNotFoundException;
 import com.modsen.cardissuer.exception.RoleNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
@@ -120,11 +120,11 @@ public class UserService {
         return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found!"));
     }
 
-    public List<UserResponseDto> findAllAccountants() {
+    public List<UserResponse> findAllAccountants() {
 
         final List<User> accountants = userRepository.findByRole(
                 roleRepository.findById(ACCOUNTANT_ID).orElseThrow(() -> new RoleNotFoundException("Role not found!")));
 
-        return accountants.stream().map(UserResponseDto::fromUser).collect(Collectors.toList());
+        return accountants.stream().map(UserResponse::fromUser).collect(Collectors.toList());
     }
 }

@@ -1,8 +1,5 @@
 package com.modsen.cardissuer.repository;
 
-import com.modsen.cardissuer.model.Card;
-import com.modsen.cardissuer.model.Status;
-import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.model.UsersCards;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,7 +11,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-class UsersCardsRepositoryTest extends AbstractRepositoryTest{
+class UsersCardsRepositoryTest extends AbstractRepositoryTest {
 
     @Autowired
     UsersCardsRepository usersCardsRepository;

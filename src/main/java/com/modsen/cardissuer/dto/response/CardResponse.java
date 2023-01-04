@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CardResponseDto {
+public class CardResponse {
     private Long number;
     private String status;
     private String type;
@@ -21,20 +21,20 @@ public class CardResponseDto {
     private String company;
     private BigDecimal balance;
 
-    public static CardResponseDto fromCard(Card card) {
-        final CardResponseDto cardResponseDto = new CardResponseDto();
-        cardResponseDto.setNumber(card.getNumber());
-        cardResponseDto.setStatus(card.getStatus());
-        cardResponseDto.setType(String.valueOf(card.getType()));
-        cardResponseDto.setPaySystem(card.getPaySystem().toString());
+    public static CardResponse fromCard(Card card) {
+        final CardResponse cardResponse = new CardResponse();
+        cardResponse.setNumber(card.getNumber());
+        cardResponse.setStatus(card.getStatus());
+        cardResponse.setType(String.valueOf(card.getType()));
+        cardResponse.setPaySystem(card.getPaySystem().toString());
         final List<UsersCards> usersCards = card.getUsersCards();
         if (usersCards == null) {
-            cardResponseDto.setUsers(null);
+            cardResponse.setUsers(null);
         } else {
-            cardResponseDto.setUsers(usersCards.stream().map(UsersCards::getUser).map(User::getName).collect(Collectors.toList()));
+            cardResponse.setUsers(usersCards.stream().map(UsersCards::getUser).map(User::getName).collect(Collectors.toList()));
         }
-        cardResponseDto.setCompany(card.getCompany().getName());
-        cardResponseDto.setBalance(card.getBalance());
-        return cardResponseDto;
+        cardResponse.setCompany(card.getCompany().getName());
+        cardResponse.setBalance(card.getBalance());
+        return cardResponse;
     }
 }

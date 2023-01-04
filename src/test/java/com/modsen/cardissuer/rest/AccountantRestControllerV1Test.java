@@ -4,8 +4,15 @@ import com.modsen.cardissuer.dto.request.AccountantRegisterUserDto;
 import com.modsen.cardissuer.dto.request.CardOrderDto;
 import com.modsen.cardissuer.dto.request.ChangeUserPermissionDto;
 import com.modsen.cardissuer.dto.request.ChangeUsersInCardDto;
-import com.modsen.cardissuer.dto.response.CardResponseDto;
-import com.modsen.cardissuer.model.*;
+import com.modsen.cardissuer.dto.response.CardResponse;
+import com.modsen.cardissuer.model.Access;
+import com.modsen.cardissuer.model.Card;
+import com.modsen.cardissuer.model.Company;
+import com.modsen.cardissuer.model.PaySystem;
+import com.modsen.cardissuer.model.Role;
+import com.modsen.cardissuer.model.Status;
+import com.modsen.cardissuer.model.Type;
+import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.service.CardService;
 import com.modsen.cardissuer.service.UserService;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
@@ -17,7 +24,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import javax.servlet.http.HttpServletRequest;
-
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
@@ -70,7 +76,7 @@ class AccountantRestControllerV1Test {
 
     @Test
     void whenGetAllCard_thenReturnRightCard() {
-        when(cardService.findCardsByCompany(any(HttpServletRequest.class))).thenReturn(List.of(CardResponseDto.fromCard(card)));
+        when(cardService.findCardsByCompany(any(HttpServletRequest.class))).thenReturn(List.of(CardResponse.fromCard(card)));
 
         given()
                 .when().get("/api/v1/accountant/cards")

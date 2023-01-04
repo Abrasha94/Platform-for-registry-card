@@ -15,7 +15,6 @@ abstract class AbstractRepositoryTest {
             .withDatabaseName("testDb")
             .withUsername("test")
             .withPassword("test");
-//            .withInitScript("db.sql");
 
     static {
         database.start();

@@ -1,7 +1,7 @@
 package com.modsen.cardissuer.service;
 
 import com.modsen.cardissuer.dto.request.ChangeCompanyStatusDto;
-import com.modsen.cardissuer.dto.response.CompanyResponseDto;
+import com.modsen.cardissuer.dto.response.CompanyResponse;
 import com.modsen.cardissuer.dto.request.RegisterCompanyDto;
 import com.modsen.cardissuer.exception.CompanyNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
@@ -54,13 +54,13 @@ public class CompanyService {
         return companyRepository.findById(id).orElseThrow(() -> new CompanyNotFoundException("Company not found!"));
     }
 
-    public List<CompanyResponseDto> findAll() {
+    public List<CompanyResponse> findAll() {
         final List<Company> companies = companyRepository.findAll();
         if (companies.isEmpty()) {
             throw new CompanyNotFoundException("Company not found!");
         }
         return companies.stream()
-                .map(CompanyResponseDto::fromCompany)
+                .map(CompanyResponse::fromCompany)
                 .collect(Collectors.toList());
     }
 }

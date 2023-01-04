@@ -1,6 +1,6 @@
 package com.modsen.cardissuer.rest;
 
-import com.modsen.cardissuer.dto.response.CardResponseDto;
+import com.modsen.cardissuer.dto.response.CardResponse;
 import com.modsen.cardissuer.model.Card;
 import com.modsen.cardissuer.model.Company;
 import com.modsen.cardissuer.model.PaySystem;
@@ -16,7 +16,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import javax.servlet.http.HttpServletRequest;
-
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -50,7 +49,7 @@ class UserRestControllerV1Test {
 
     @Test
     void whenGetAllCard_thenReturnRightCard() {
-        when(cardService.findCardsByUser(Mockito.any(HttpServletRequest.class))).thenReturn(List.of(CardResponseDto.fromCard(card)));
+        when(cardService.findCardsByUser(Mockito.any(HttpServletRequest.class))).thenReturn(List.of(CardResponse.fromCard(card)));
 
         given()
                 .when()

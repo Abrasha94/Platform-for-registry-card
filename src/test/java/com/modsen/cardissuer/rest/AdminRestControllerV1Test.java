@@ -4,9 +4,16 @@ import com.modsen.cardissuer.dto.request.AdminRegisterUserDto;
 import com.modsen.cardissuer.dto.request.ChangeCompanyStatusDto;
 import com.modsen.cardissuer.dto.request.ChangeUserStatusDto;
 import com.modsen.cardissuer.dto.request.RegisterCompanyDto;
-import com.modsen.cardissuer.dto.response.CompanyResponseDto;
-import com.modsen.cardissuer.dto.response.UserResponseDto;
-import com.modsen.cardissuer.model.*;
+import com.modsen.cardissuer.dto.response.CompanyResponse;
+import com.modsen.cardissuer.dto.response.UserResponse;
+import com.modsen.cardissuer.model.Access;
+import com.modsen.cardissuer.model.Card;
+import com.modsen.cardissuer.model.Company;
+import com.modsen.cardissuer.model.PaySystem;
+import com.modsen.cardissuer.model.Role;
+import com.modsen.cardissuer.model.Status;
+import com.modsen.cardissuer.model.Type;
+import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.service.CompanyService;
 import com.modsen.cardissuer.service.UserService;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
@@ -149,7 +156,7 @@ class AdminRestControllerV1Test {
 
     @Test
     void whenGetAllCompanies_thenReturnFoundedCompany() {
-        when(companyService.findAll()).thenReturn(List.of(CompanyResponseDto.fromCompany(company)));
+        when(companyService.findAll()).thenReturn(List.of(CompanyResponse.fromCompany(company)));
 
         given()
                 .when()
@@ -163,7 +170,7 @@ class AdminRestControllerV1Test {
 
     @Test
     void whenGetAllAccountants_thenReturnFoundedUser() {
-        when(userService.findAllAccountants()).thenReturn(List.of(UserResponseDto.fromUser(user)));
+        when(userService.findAllAccountants()).thenReturn(List.of(UserResponse.fromUser(user)));
 
         given()
                 .when()

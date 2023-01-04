@@ -2,10 +2,10 @@ package com.modsen.cardissuer.rest;
 
 import com.modsen.cardissuer.dto.request.AccountantRegisterUserDto;
 import com.modsen.cardissuer.dto.request.CardOrderDto;
-import com.modsen.cardissuer.dto.response.CardResponseDto;
+import com.modsen.cardissuer.dto.response.CardResponse;
 import com.modsen.cardissuer.dto.request.ChangeUserPermissionDto;
 import com.modsen.cardissuer.dto.request.ChangeUsersInCardDto;
-import com.modsen.cardissuer.dto.response.UserResponseDto;
+import com.modsen.cardissuer.dto.response.UserResponse;
 import com.modsen.cardissuer.model.Card;
 import com.modsen.cardissuer.model.User;
 import com.modsen.cardissuer.service.CardService;
@@ -38,8 +38,8 @@ public class AccountantRestControllerV1 {
     }
 
     @GetMapping("cards")
-    public ResponseEntity<List<CardResponseDto>> getAllCard(HttpServletRequest request) {
-        final List<CardResponseDto> cards = cardService.findCardsByCompany(request);
+    public ResponseEntity<List<CardResponse>> getAllCard(HttpServletRequest request) {
+        final List<CardResponse> cards = cardService.findCardsByCompany(request);
 
         if (cards.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -49,32 +49,32 @@ public class AccountantRestControllerV1 {
     }
 
     @PostMapping("register/users")
-    public ResponseEntity<UserResponseDto> registerUserInCompany(@RequestBody AccountantRegisterUserDto dto, HttpServletRequest request) {
+    public ResponseEntity<UserResponse> registerUserInCompany(@RequestBody AccountantRegisterUserDto dto, HttpServletRequest request) {
         final User user = userService.saveInCompany(dto, request);
 
-        return new ResponseEntity<>(UserResponseDto.fromUser(user), HttpStatus.OK);
+        return new ResponseEntity<>(UserResponse.fromUser(user), HttpStatus.OK);
     }
 
     @PostMapping("users/{id}/permissions")
-    public ResponseEntity<UserResponseDto> changeUserPermission(@PathVariable(name = "id") Long id,
-                                                                @RequestBody ChangeUserPermissionDto dto) {
+    public ResponseEntity<UserResponse> changeUserPermission(@PathVariable(name = "id") Long id,
+                                                             @RequestBody ChangeUserPermissionDto dto) {
         final User user = userService.changePermission(id, dto);
 
-        return new ResponseEntity<>(UserResponseDto.fromUser(user), HttpStatus.OK);
+        return new ResponseEntity<>(UserResponse.fromUser(user), HttpStatus.OK);
     }
 
     @PostMapping("cards/order")
-    public ResponseEntity<CardResponseDto> orderCard(@RequestBody CardOrderDto dto, HttpServletRequest request) {
+    public ResponseEntity<CardResponse> orderCard(@RequestBody CardOrderDto dto, HttpServletRequest request) {
         final Card card = cardService.orderCard(dto, request);
 
-        return new ResponseEntity<>(CardResponseDto.fromCard(card), HttpStatus.OK);
+        return new ResponseEntity<>(CardResponse.fromCard(card), HttpStatus.OK);
     }
 
     @PostMapping("cards/{number}/change")
-    public ResponseEntity<CardResponseDto> addUsersInCard(@PathVariable(name = "number") Long number,
-                                                          @RequestBody ChangeUsersInCardDto dto) {
+    public ResponseEntity<CardResponse> addUsersInCard(@PathVariable(name = "number") Long number,
+                                                       @RequestBody ChangeUsersInCardDto dto) {
         final Card card = cardService.addUser(number, dto);
 
-        return new ResponseEntity<>(CardResponseDto.fromCard(card), HttpStatus.OK);
+        return new ResponseEntity<>(CardResponse.fromCard(card), HttpStatus.OK);
     }
 }

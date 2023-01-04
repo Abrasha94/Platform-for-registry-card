@@ -1,6 +1,10 @@
 package com.modsen.cardissuer.repository;
 
-import com.modsen.cardissuer.model.*;
+import com.modsen.cardissuer.model.Card;
+import com.modsen.cardissuer.model.Company;
+import com.modsen.cardissuer.model.PaySystem;
+import com.modsen.cardissuer.model.Status;
+import com.modsen.cardissuer.model.Type;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
