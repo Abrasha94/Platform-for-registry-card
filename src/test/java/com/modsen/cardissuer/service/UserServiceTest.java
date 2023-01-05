@@ -4,7 +4,7 @@ import com.modsen.cardissuer.dto.request.AccountantRegisterUserDto;
 import com.modsen.cardissuer.dto.request.AdminRegisterUserDto;
 import com.modsen.cardissuer.dto.request.ChangeUserPermissionDto;
 import com.modsen.cardissuer.dto.request.ChangeUserStatusDto;
-import com.modsen.cardissuer.dto.response.UserResponseDto;
+import com.modsen.cardissuer.dto.response.UserResponse;
 import com.modsen.cardissuer.exception.CompanyNotFoundException;
 import com.modsen.cardissuer.exception.RoleNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
@@ -259,7 +259,7 @@ class UserServiceTest {
         when(roleRepository.findById(3L)).thenReturn(Optional.of(new Role()));
         when(userRepository.findByRole(any(Role.class))).thenReturn(List.of(user));
 
-        final List<UserResponseDto> allAccountants = userService.findAllAccountants();
+        final List<UserResponse> allAccountants = userService.findAllAccountants();
 
         verify(roleRepository, times(1)).findById(3L);
         verify(userRepository, times(1)).findByRole(any(Role.class));

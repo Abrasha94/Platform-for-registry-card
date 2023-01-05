@@ -3,7 +3,7 @@ package com.modsen.cardissuer.service;
 import com.modsen.cardissuer.client.BalanceClient;
 import com.modsen.cardissuer.dto.request.CardOrderDto;
 import com.modsen.cardissuer.dto.request.ChangeUsersInCardDto;
-import com.modsen.cardissuer.dto.response.CardResponseDto;
+import com.modsen.cardissuer.dto.response.CardResponse;
 import com.modsen.cardissuer.exception.CardNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Balance;
@@ -100,7 +100,7 @@ class CardServiceTest {
         when(kafkaTemplate.send(any(), any())).thenReturn(mock(ListenableFuture.class));
         when(balanceClient.getBalance(any())).thenReturn(new ResponseEntity<>(new Balance(BigDecimal.TEN, 1L), HttpStatus.OK));
 
-        final List<CardResponseDto> cardsByCompany = cardService.findCardsByCompany(request);
+        final List<CardResponse> cardsByCompany = cardService.findCardsByCompany(request);
 
         Mockito.verify(userRepository, times(1)).findByKeycloakUserId(any());
         Mockito.verify(cardRepository, times(1)).findByCompany(any());
@@ -139,7 +139,7 @@ class CardServiceTest {
         when(kafkaTemplate.send(any(), any())).thenReturn(mock(ListenableFuture.class));
         when(balanceClient.getBalance(any())).thenReturn(new ResponseEntity<>(new Balance(BigDecimal.TEN, 1L), HttpStatus.OK));
 
-        final List<CardResponseDto> cardsByCompany = cardService.findCardsByUser(request);
+        final List<CardResponse> cardsByCompany = cardService.findCardsByUser(request);
 
         Mockito.verify(userRepository, times(1)).findByKeycloakUserId(any());
         Mockito.verify(usersCardsRepository, times(1)).findByUserId(any());

@@ -11,7 +11,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-class RoleRepositoryTest extends AbstractRepositoryTest{
+class RoleRepositoryTest extends AbstractRepositoryTest {
 
     @Autowired
     RoleRepository roleRepository;

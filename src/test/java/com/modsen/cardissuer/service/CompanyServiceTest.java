@@ -2,7 +2,7 @@ package com.modsen.cardissuer.service;
 
 import com.modsen.cardissuer.dto.request.ChangeCompanyStatusDto;
 import com.modsen.cardissuer.dto.request.RegisterCompanyDto;
-import com.modsen.cardissuer.dto.response.CompanyResponseDto;
+import com.modsen.cardissuer.dto.response.CompanyResponse;
 import com.modsen.cardissuer.exception.CompanyNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Company;
@@ -117,7 +117,7 @@ class CompanyServiceTest {
     void whenFindAll_thenReturnRightDto() {
         when(companyRepository.findAll()).thenReturn(List.of(company));
 
-        final List<CompanyResponseDto> all = companyService.findAll();
+        final List<CompanyResponse> all = companyService.findAll();
 
         verify(companyRepository, times(1)).findAll();
         assertThat(all.get(0).getName()).isEqualTo(company.getName());
