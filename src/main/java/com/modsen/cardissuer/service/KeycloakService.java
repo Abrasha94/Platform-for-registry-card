@@ -1,6 +1,7 @@
 package com.modsen.cardissuer.service;
 
 import com.modsen.cardissuer.configuration.KeycloakManager;
+import com.modsen.cardissuer.exception.Messages;
 import com.modsen.cardissuer.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.admin.client.resource.UserResource;
@@ -14,6 +15,7 @@ import javax.ws.rs.core.Response;
 public class KeycloakService {
 
     private final KeycloakManager keycloakManager;
+    private final Messages messages;
 
     public Integer createUser(UserRepresentation userRepresentation) {
         final Response response = keycloakManager.getKeycloakInstanceWithRealm().users().create(userRepresentation);
@@ -29,7 +31,7 @@ public class KeycloakService {
             final UserResource userResource = keycloakManager.getKeycloakInstanceWithRealm().users().get(keycloakUserId);
             return userResource.toRepresentation();
         } catch (Exception e) {
-            throw new UserNotFoundException("user not found under given ID");
+            throw new UserNotFoundException(messages.userNotFound);
         }
     }
 }

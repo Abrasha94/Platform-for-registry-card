@@ -1,12 +1,13 @@
 package com.modsen.cardissuer.service;
 
 import com.modsen.cardissuer.client.BalanceClient;
-import com.modsen.cardissuer.kafka.KafkaProducer;
 import com.modsen.cardissuer.dto.request.CardOrderDto;
-import com.modsen.cardissuer.dto.response.CardResponse;
 import com.modsen.cardissuer.dto.request.ChangeUsersInCardDto;
+import com.modsen.cardissuer.dto.response.CardResponse;
 import com.modsen.cardissuer.exception.CardNotFoundException;
+import com.modsen.cardissuer.exception.Messages;
 import com.modsen.cardissuer.exception.UserNotFoundException;
+import com.modsen.cardissuer.kafka.KafkaProducer;
 import com.modsen.cardissuer.model.Balance;
 import com.modsen.cardissuer.model.Card;
 import com.modsen.cardissuer.model.PaySystem;
@@ -23,7 +24,6 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,9 +39,8 @@ public class CardService {
 
     private Logger logger = LoggerFactory.getLogger(AccountantRestControllerV1.class);
 
-    @Value("${exception.user.not.found}")
-    private String userNotFound;
     public static final String HEADER_KEYCLOAKUSERID = "keycloakUserID";
+
     private final CardRepository cardRepository;
     private final UserRepository userRepository;
     private final UsersCardsRepository usersCardsRepository;
@@ -49,11 +48,12 @@ public class CardService {
     private final GenerateCardNumber generateCardNumber;
     private final KafkaProducer kafkaProducer;
     private final BalanceClient balanceClient;
+    private final Messages messages;
 
     @Autowired
     public CardService(CardRepository cardRepository, UserRepository userRepository,
                        GenerateCardNumber generateCardNumber, UsersCardsRepository usersCardsRepository,
-                       UsersCardsService usersCardsService, KafkaProducer kafkaProducer, BalanceClient balanceClient) {
+                       UsersCardsService usersCardsService, KafkaProducer kafkaProducer, BalanceClient balanceClient, Messages messages) {
         this.cardRepository = cardRepository;
         this.userRepository = userRepository;
         this.generateCardNumber = generateCardNumber;
@@ -61,16 +61,17 @@ public class CardService {
         this.usersCardsService = usersCardsService;
         this.kafkaProducer = kafkaProducer;
         this.balanceClient = balanceClient;
+        this.messages = messages;
     }
 
     public List<CardResponse> findCardsByCompany(HttpServletRequest request) {
 
         final User user = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID))
-                .orElseThrow(() -> new UserNotFoundException(userNotFound));
+                .orElseThrow(() -> new UserNotFoundException(messages.userNotFound));
 
         final List<Card> cardsByCompany = cardRepository.findByCompany(user.getCompany());
         if (cardsByCompany.isEmpty()) {
-            throw new CardNotFoundException("Cards not found!");
+            throw new CardNotFoundException(messages.cardsNotFound);
         } else {
             final List<Card> cardsWithBalance = addBalanceToListOfCards(cardsByCompany);
             return cardsWithBalance.stream().map(CardResponse::fromCard).collect(Collectors.toList());
@@ -80,12 +81,12 @@ public class CardService {
     public List<CardResponse> findCardsByUser(HttpServletRequest request) {
 
         final User user = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID))
-                .orElseThrow(() -> new UserNotFoundException("User not found!"));
+                .orElseThrow(() -> new UserNotFoundException(messages.userNotFound));
 
         final List<UsersCards> usersCardsList = usersCardsRepository.findByUserId(user.getId());
 
         if (usersCardsList.isEmpty()) {
-            throw new CardNotFoundException("Cards not found!");
+            throw new CardNotFoundException(messages.cardsNotFound);
         } else {
             final List<Card> cards = usersCardsList.stream().map(UsersCards::getCard).collect(Collectors.toList());
             final List<Card> cardsWithBalance = addBalanceToListOfCards(cards);
@@ -96,7 +97,7 @@ public class CardService {
     public Card orderCard(CardOrderDto dto, HttpServletRequest request) {
 
         final User requestUser = userRepository.findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID))
-                .orElseThrow(() -> new UserNotFoundException("User not found!"));
+                .orElseThrow(() -> new UserNotFoundException(messages.userNotFound));
 
         final Card card = new Card();
 
@@ -117,7 +118,7 @@ public class CardService {
             return cardRepository.save(card);
         } else {
             final User user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new UserNotFoundException("User not found!"));
+                    .orElseThrow(() -> new UserNotFoundException(messages.userNotFound));
 
             final UsersCards usersCards = new UsersCards();
             usersCards.setUser(user);
@@ -132,13 +133,13 @@ public class CardService {
 
     public Card addUser(Long cardNumber, ChangeUsersInCardDto dto) {
 
-        final Card card = cardRepository.findById(cardNumber).orElseThrow(() -> new CardNotFoundException("Card not found!"));
+        final Card card = cardRepository.findById(cardNumber).orElseThrow(() -> new CardNotFoundException(messages.cardsNotFound));
 
         if (Type.PERSONAL.equals(card.getType())) {
-            throw new CardNotFoundException("This card are personal!");
+            throw new CardNotFoundException(messages.cardIsPersonal);
         } else {
             final List<User> users = dto.getUsersId().stream()
-                    .map(id -> userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found!")))
+                    .map(id -> userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(messages.userNotFound)))
                     .collect(Collectors.toList());
             final List<UsersCards> usersCards = users.stream()
                     .map(user -> usersCardsService.save(user, card))
@@ -169,13 +170,13 @@ public class CardService {
 
         final ResponseEntity<Balance> response = balanceClient.getBalance(cardNumber);
         if (response.getBody() == null || response.getStatusCode() == HttpStatus.NOT_FOUND) {
-            throw new CardNotFoundException("Card not found!");
+            throw new CardNotFoundException(messages.cardsNotFound);
         }
         return response.getBody();
     }
 
     private Balance fallbackBalance(Long cardNumber) {
-        final Card card = cardRepository.findById(cardNumber).orElseThrow(() -> new CardNotFoundException("Card not found!"));
+        final Card card = cardRepository.findById(cardNumber).orElseThrow(() -> new CardNotFoundException(messages.cardsNotFound));
         return new Balance(card.getBalance(), cardNumber);
     }
 

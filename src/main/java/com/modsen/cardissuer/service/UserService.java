@@ -6,6 +6,7 @@ import com.modsen.cardissuer.dto.request.ChangeUserPermissionDto;
 import com.modsen.cardissuer.dto.request.ChangeUserStatusDto;
 import com.modsen.cardissuer.dto.response.UserResponse;
 import com.modsen.cardissuer.exception.CompanyNotFoundException;
+import com.modsen.cardissuer.exception.Messages;
 import com.modsen.cardissuer.exception.RoleNotFoundException;
 import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Access;
@@ -43,17 +44,19 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final AccessRepository accessRepository;
     private final BCryptPasswordEncoder encoder;
+    private final Messages messages;
 
     @Autowired
     public UserService(UserRepository userRepository, CompanyRepository companyRepository,
                        RoleRepository roleRepository, AccessRepository accessRepository,
-                       BCryptPasswordEncoder encoder) {
+                       BCryptPasswordEncoder encoder, Messages messages) {
 
         this.userRepository = userRepository;
         this.companyRepository = companyRepository;
         this.roleRepository = roleRepository;
         this.accessRepository = accessRepository;
         this.encoder = encoder;
+        this.messages = messages;
     }
 
     public User save(AdminRegisterUserDto userDto) {
@@ -62,10 +65,10 @@ public class UserService {
         user.setName(userDto.getName());
         user.setPassword(encoder.encode(userDto.getPassword()));
         user.setStatus(Status.ACTIVE);
-        user.setCompany(companyRepository.findById(userDto.getCompaniesId()).orElseThrow(() -> new CompanyNotFoundException("Company not found!")));
-        user.setRole(roleRepository.findById(userDto.getRoleId()).orElseThrow(() -> new RoleNotFoundException("Role not found!")));
+        user.setCompany(companyRepository.findById(userDto.getCompaniesId()).orElseThrow(() -> new CompanyNotFoundException(messages.companyNotFound)));
+        user.setRole(roleRepository.findById(userDto.getRoleId()).orElseThrow(() -> new RoleNotFoundException(messages.roleNotFound)));
         user.setAccessSet(userDto.getAccessId().stream()
-                .map(id -> accessRepository.findById(id).orElseThrow(() -> new RoleNotFoundException("Role not found!")))
+                .map(id -> accessRepository.findById(id).orElseThrow(() -> new RoleNotFoundException(messages.roleNotFound)))
                 .collect(Collectors.toSet()));
 
         return userRepository.save(user);
@@ -75,24 +78,24 @@ public class UserService {
 
         final User reqUser = userRepository
                 .findByKeycloakUserId(request.getHeader(HEADER_KEYCLOAKUSERID))
-                .orElseThrow(() -> new UserNotFoundException("User not found!"));
+                .orElseThrow(() -> new UserNotFoundException(messages.userNotFound));
 
         final User user = new User();
         user.setName(dto.getName());
         user.setPassword(encoder.encode(dto.getPassword()));
         user.setStatus(Status.ACTIVE);
         user.setCompany(reqUser.getCompany());
-        user.setRole(roleRepository.findById(ID).orElseThrow(() -> new RoleNotFoundException("Role not found!")));
+        user.setRole(roleRepository.findById(ID).orElseThrow(() -> new RoleNotFoundException(messages.roleNotFound)));
         user.setAccessSet(Collections.singleton(accessRepository
                 .findById(ID)
-                .orElseThrow(() -> new RoleNotFoundException("Role not found!"))));
+                .orElseThrow(() -> new RoleNotFoundException(messages.roleNotFound))));
 
         return userRepository.save(user);
     }
 
     public User changeStatus(Long id, ChangeUserStatusDto dto) {
 
-        final User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found!"));
+        final User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(messages.userNotFound));
         user.setStatus(dto.getStatus());
 
         return userRepository.save(user);
@@ -100,10 +103,10 @@ public class UserService {
 
     public User changePermission(Long id, ChangeUserPermissionDto dto) {
 
-        final User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found!"));
+        final User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(messages.userNotFound));
 
         final Set<Access> accessSet = dto.getAccessId().stream()
-                .map(id1 -> accessRepository.findById(id1).orElseThrow(() -> new RoleNotFoundException("Role not found!")))
+                .map(id1 -> accessRepository.findById(id1).orElseThrow(() -> new RoleNotFoundException(messages.roleNotFound)))
                 .collect(Collectors.toSet());
         user.setAccessSet(accessSet);
 
@@ -112,18 +115,18 @@ public class UserService {
 
     public User findByName(String name) {
 
-        return userRepository.findByName(name).orElseThrow(() -> new UserNotFoundException("User not found!"));
+        return userRepository.findByName(name).orElseThrow(() -> new UserNotFoundException(messages.userNotFound));
     }
 
     public User findById(Long id) {
 
-        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found!"));
+        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(messages.userNotFound));
     }
 
     public List<UserResponse> findAllAccountants() {
 
         final List<User> accountants = userRepository.findByRole(
-                roleRepository.findById(ACCOUNTANT_ID).orElseThrow(() -> new RoleNotFoundException("Role not found!")));
+                roleRepository.findById(ACCOUNTANT_ID).orElseThrow(() -> new RoleNotFoundException(messages.roleNotFound)));
 
         return accountants.stream().map(UserResponse::fromUser).collect(Collectors.toList());
     }

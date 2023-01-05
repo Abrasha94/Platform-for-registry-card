@@ -1,8 +1,0 @@
-[2022-11-11 13:34:42.860] - 58340 INFO [restartedMain] --- org.apache.catalina.core.StandardService: Starting service [Tomcat]
-[2022-11-11 13:34:42.866] - 58340 INFO [restartedMain] --- org.apache.catalina.core.StandardEngine: Starting Servlet engine: [Apache Tomcat/9.0.65]
-[2022-11-11 13:34:43.023] - 58340 INFO [restartedMain] --- org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/]: Initializing Spring embedded WebApplicationContext
-[2022-11-11 13:34:44.676] - 58340 INFO [restartedMain] --- liquibase.database: Set default schema name to public
-[2022-11-11 13:34:44.777] - 58340 INFO [restartedMain] --- liquibase.lockservice: Successfully acquired change log lock
-[2022-11-11 13:34:45.242] - 58340 INFO [restartedMain] --- liquibase.changelog: Reading from public.databasechangelog
-[2022-11-11 13:34:45.296] - 58340 INFO [restartedMain] --- liquibase.lockservice: Successfully released change log lock
-[2022-11-11 13:34:49.373] - 58340 INFO [RMI TCP Connection(2)-192.168.1.107] --- org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/]: Initializing Spring DispatcherServlet 'dispatcherServlet'

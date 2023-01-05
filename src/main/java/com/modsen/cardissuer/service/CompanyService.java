@@ -4,6 +4,7 @@ import com.modsen.cardissuer.dto.request.ChangeCompanyStatusDto;
 import com.modsen.cardissuer.dto.response.CompanyResponse;
 import com.modsen.cardissuer.dto.request.RegisterCompanyDto;
 import com.modsen.cardissuer.exception.CompanyNotFoundException;
+import com.modsen.cardissuer.exception.Messages;
 import com.modsen.cardissuer.exception.UserNotFoundException;
 import com.modsen.cardissuer.model.Company;
 import com.modsen.cardissuer.model.Status;
@@ -21,11 +22,13 @@ public class CompanyService {
 
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
+    private final Messages messages;
 
     @Autowired
-    public CompanyService(CompanyRepository companyRepository, UserRepository userRepository) {
+    public CompanyService(CompanyRepository companyRepository, UserRepository userRepository, Messages messages) {
         this.companyRepository = companyRepository;
         this.userRepository = userRepository;
+        this.messages = messages;
     }
 
     public Company save(RegisterCompanyDto registerCompanyDto) {
@@ -36,13 +39,13 @@ public class CompanyService {
     }
 
     public Company changeStatus(Long id, ChangeCompanyStatusDto dto) {
-        final Company company = companyRepository.findById(id).orElseThrow(() -> new CompanyNotFoundException("Company not found!"));
+        final Company company = companyRepository.findById(id).orElseThrow(() -> new CompanyNotFoundException(messages.companyNotFound));
         company.setStatus(dto.getStatus());
         final Company savedCompany = companyRepository.save(company);
 
         final List<User> users = savedCompany.getUsers();
         for (User user : users) {
-            final User foundedUser = userRepository.findById(user.getId()).orElseThrow(() -> new UserNotFoundException("User not found!"));
+            final User foundedUser = userRepository.findById(user.getId()).orElseThrow(() -> new UserNotFoundException(messages.userNotFound));
             foundedUser.setStatus(dto.getStatus());
             userRepository.save(user);
         }
@@ -51,13 +54,13 @@ public class CompanyService {
     }
 
     public Company findById(Long id) {
-        return companyRepository.findById(id).orElseThrow(() -> new CompanyNotFoundException("Company not found!"));
+        return companyRepository.findById(id).orElseThrow(() -> new CompanyNotFoundException(messages.companyNotFound));
     }
 
     public List<CompanyResponse> findAll() {
         final List<Company> companies = companyRepository.findAll();
         if (companies.isEmpty()) {
-            throw new CompanyNotFoundException("Company not found!");
+            throw new CompanyNotFoundException(messages.companyNotFound);
         }
         return companies.stream()
                 .map(CompanyResponse::fromCompany)
